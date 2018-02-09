@@ -5,11 +5,7 @@
     Feel free to customize this file to suit your needs
 */
 
-#ifdef SDL_INC
-#include "SDL/SDL.h"
-#else
-#include "SDL.h"
-#endif
+#include "SDLCompat.h"
 #include "SDLMain.h"
 #include <sys/param.h> /* for MAXPATHLEN */
 #include <unistd.h>
@@ -367,34 +363,7 @@ static void CustomApplicationMain (int argc, char **argv)
 
 @end
 
-char * readUserPreferences()
-{
-    NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
-
-    NSString *prefDataNSString = [prefs stringForKey:@"powder.pref"];
-    const char *prefData = [prefDataNSString UTF8String];
-    if(prefData == NULL)
-        prefData = "";
-
-    char *prefDataCopy = calloc([prefDataNSString length]+1, 1);
-    SDL_strlcpy(prefDataCopy, prefData, [prefDataNSString length]+1);
-
-    [prefDataNSString release];
-
-    return prefDataCopy;
-}
-
-void writeUserPreferences(const char * prefData)
-{
-    NSString *prefDataNSString = [NSString stringWithUTF8String:prefData];
-
-    NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
-    [prefs setObject:prefDataNSString forKey:@"powder.pref"];
-    [prefs synchronize];
-
-    [prefDataNSString release];
-}
-
+//doesn't work on OS X 10.5 or below
 char * readClipboard()
 {
     NSPasteboard *clipboard = [NSPasteboard generalPasteboard];
@@ -416,6 +385,7 @@ char * readClipboard()
     return clipboardDataCopy;
 }
 
+//doesn't work on OS X 10.5 or below
 void writeClipboard(const char * clipboardData)
 {
     NSPasteboard *clipboard = [NSPasteboard generalPasteboard];

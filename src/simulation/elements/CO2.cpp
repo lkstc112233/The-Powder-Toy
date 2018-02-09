@@ -8,7 +8,7 @@ Element_CO2::Element_CO2()
 	MenuVisible = 1;
 	MenuSection = SC_GAS;
 	Enabled = 1;
-	
+
 	Advection = 2.0f;
 	AirDrag = 0.00f * CFDS;
 	AirLoss = 0.99f;
@@ -18,21 +18,20 @@ Element_CO2::Element_CO2()
 	Diffusion = 1.0f;
 	HotAir = 0.000f	* CFDS;
 	Falldown = 1;
-	
+
 	Flammable = 0;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 0;
-	
+
 	Weight = 1;
-	
+
 	Temperature = R_TEMP+273.15f;
 	HeatConduct = 88;
 	Description = "Carbon Dioxide. Heavy gas, drifts downwards. Carbonates water and turns to dry ice when cold.";
-	
-	State = ST_GAS;
+
 	Properties = TYPE_GAS;
-	
+
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = IPH;
@@ -41,14 +40,13 @@ Element_CO2::Element_CO2()
 	LowTemperatureTransition = PT_DRIC;
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
-	
+
 	Update = &Element_CO2::update;
-	
 }
 
 //#TPT-Directive ElementHeader Element_CO2 static int update(UPDATE_FUNC_ARGS)
 int Element_CO2::update(UPDATE_FUNC_ARGS)
- {
+{
 	int r, rx, ry;
 	for (rx=-1; rx<2; rx++)
 		for (ry=-1; ry<2; ry++)
@@ -64,16 +62,16 @@ int Element_CO2::update(UPDATE_FUNC_ARGS)
 					}
 					continue;
 				}
-				if ((r&0xFF)==PT_FIRE){
-					sim->kill_part(r>>8);
+				if (TYP(r)==PT_FIRE){
+					sim->kill_part(ID(r));
 					if(!(rand()%30)){
 						sim->kill_part(i);
 						return 1;
 					}
 				}
-				else if (((r&0xFF)==PT_WATR || (r&0xFF)==PT_DSTW) && !(rand()%50))
+				else if ((TYP(r)==PT_WATR || TYP(r)==PT_DSTW) && !(rand()%50))
 				{
-					sim->part_change_type(r>>8, x+rx, y+ry, PT_CBNW);
+					sim->part_change_type(ID(r), x+rx, y+ry, PT_CBNW);
 					if (parts[i].ctype==5) //conserve number of water particles - ctype=5 means this CO2 hasn't released the water particle from BUBW yet
 					{
 						sim->create_part(i, x, y, PT_WATR);
@@ -92,12 +90,12 @@ int Element_CO2::update(UPDATE_FUNC_ARGS)
 		{
 			int j;
 			sim->create_part(i,x,y,PT_O2);
-			j = sim->create_part(-3,x+rand()%3-1,y+rand()%3-1,PT_NEUT);
+			j = sim->create_part(-3,x,y,PT_NEUT);
 			if (j != -1)
 				parts[j].temp = MAX_TEMP;
 			if (!(rand()%50))
 			{
-				j = sim->create_part(-3,x+rand()%3-1,y+rand()%3-1,PT_ELEC);
+				j = sim->create_part(-3,x,y,PT_ELEC);
 				if (j != -1)
 					parts[j].temp = MAX_TEMP;
 			}

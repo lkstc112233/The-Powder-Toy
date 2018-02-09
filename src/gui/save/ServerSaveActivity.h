@@ -7,12 +7,14 @@
 
 namespace ui
 {
+	class Label;
 	class Textbox;
 	class Checkbox;
 }
 
 class Task;
 class Thumbnail;
+class VideoBuffer;
 class ServerSaveActivity: public WindowActivity, public RequestListener, public TaskListener
 {
 public:
@@ -30,16 +32,19 @@ public:
 	virtual void Exit();
 	virtual void ShowPublishingInfo();
 	virtual void ShowRules();
+	virtual void CheckName(std::string newname);
 	virtual void OnDraw();
 	virtual void OnResponseReady(void * imagePtr, int identifier);
 	virtual void OnTick(float dt);
 	virtual ~ServerSaveActivity();
 protected:
+	void AddAuthorInfo();
 	virtual void NotifyDone(Task * task);
-	Task * saveUploadTask;
-	SaveUploadedCallback * callback;
-	SaveInfo save;
 	VideoBuffer * thumbnail;
+	SaveInfo save;
+	SaveUploadedCallback * callback;
+	Task * saveUploadTask;
+	ui::Label * titleLabel;
 	ui::Textbox * nameField;
 	ui::Textbox * descriptionField;
 	ui::Checkbox * publishedCheckbox;
@@ -48,4 +53,5 @@ protected:
 	class SaveAction;
 	class PublishingAction;
 	class RulesAction;
+	class NameChangedAction;
 };

@@ -1,5 +1,5 @@
 #include "font.h"
-#include <math.h>
+#include <cmath>
 
 int PIXELMETHODS_CLASS::drawtext_outline(int x, int y, const char *s, int r, int g, int b, int a)
 {
@@ -16,7 +16,6 @@ int PIXELMETHODS_CLASS::drawtext(int x, int y, const char *s, int r, int g, int 
 {
 	if(!strlen(s))
 		return 0;
-	int width, height;
 
 	int invert = 0;
 	int oR = r, oG = g, oB = b;
@@ -111,7 +110,7 @@ int PIXELMETHODS_CLASS::drawtext(int x, int y, std::string s, int r, int g, int 
 int PIXELMETHODS_CLASS::drawchar(int x, int y, int c, int r, int g, int b, int a)
 {
 	int i, j, w, bn = 0, ba = 0;
-	char *rp = font_data + font_ptrs[c];
+	unsigned char *rp = font_data + font_ptrs[c];
 	w = *(rp++);
 	for (j=0; j<FONT_H; j++)
 		for (i=0; i<w; i++)
@@ -131,7 +130,7 @@ int PIXELMETHODS_CLASS::drawchar(int x, int y, int c, int r, int g, int b, int a
 int PIXELMETHODS_CLASS::addchar(int x, int y, int c, int r, int g, int b, int a)
 {
 	int i, j, w, bn = 0, ba = 0;
-	char *rp = font_data + font_ptrs[c];
+	unsigned char *rp = font_data + font_ptrs[c];
 	w = *(rp++);
 	for (j=0; j<FONT_H; j++)
 		for (i=0; i<w; i++)
@@ -446,26 +445,48 @@ void PIXELMETHODS_CLASS::clearrect(int x, int y, int w, int h)
 
 void PIXELMETHODS_CLASS::draw_image(pixel *img, int x, int y, int w, int h, int a)
 {
-	int i, j, r, g, b;
-	if (!img) return;
-	if(y + h > VIDYRES) h = ((VIDYRES)-y)-1; //Adjust height to prevent drawing off the bottom
+	int startX = 0;
+	if (!img)
+		return;
+	// Adjust height to prevent drawing off the bottom
+	if (y + h > VIDYRES)
+		h = ((VIDYRES)-y)-1;
+	// Too big
+	if (x + w > VIDXRES)
+		return;
+
+	// Starts off the top of the screen, adjust
 	if (y < 0 && -y < h)
 	{
 		img += -y*w;
 		h += y;
 		y = 0;
 	}
-	if(!h || y < 0) return;
-	if(a >= 255)
-		for (j=0; j<h; j++)
-			for (i=0; i<w; i++)
+	// Starts off the left side of the screen, adjust
+	if (x < 0 && -x < w)
+	{
+		startX = -x;
+	}
+
+	if (!h || y < 0 || !w)
+		return;
+	if (a >= 255)
+		for (int j = 0; j < h; j++)
+		{
+			img += startX;
+			for (int i = startX; i < w; i++)
 			{
 				vid[(y+j)*(VIDXRES)+(x+i)] = *img;
 				img++;
 			}
+		}
 	else
-		for (j=0; j<h; j++)
-			for (i=0; i<w; i++)
+	{
+		int r, g, b;
+		for (int j = 0; j < h; j++)
+		{
+			img += startX;
+			for (int i = startX; i < w; i++)
 			{
 				r = PIXR(*img);
 				g = PIXG(*img);
@@ -473,6 +494,8 @@ void PIXELMETHODS_CLASS::draw_image(pixel *img, int x, int y, int w, int h, int 
 				blendpixel(x+i, y+j, r, g, b, a);
 				img++;
 			}
+		}
+	}
 }
 
 void PIXELMETHODS_CLASS::draw_image(const VideoBuffer & vidBuf, int x, int y, int a)

@@ -6,6 +6,8 @@
 #include "Config.h"
 #include "Misc.h"
 
+#include "bson/BSON.h"
+#include "json/json.h"
 #include "simulation/Sign.h"
 #include "simulation/Particle.h"
 
@@ -21,7 +23,18 @@ public:
 	{
 		return message.c_str();
 	}
-	~ParseException() throw() {};
+	~ParseException() throw() {}
+};
+
+struct BuildException: public std::exception {
+	std::string message;
+public:
+	BuildException(std::string message_): message(message_) {}
+	const char * what() const throw()
+	{
+		return message.c_str();
+	}
+	~BuildException() throw() {}
 };
 
 class GameSave
@@ -29,6 +42,9 @@ class GameSave
 public:
 	
 	int blockWidth, blockHeight;
+	bool fromNewerVersion;
+	bool hasPressure;
+	bool hasAmbientHeat;
 
 	//Simulation data
 	//int ** particleMap;
@@ -37,6 +53,10 @@ public:
 	unsigned char ** blockMap;
 	float ** fanVelX;
 	float ** fanVelY;
+	float ** pressure;
+	float ** velocityX;
+	float ** velocityY;
+	float ** ambientHeat;
 	
 	//Simulation Options
 	bool waterEEnabled;
@@ -46,6 +66,7 @@ public:
 	bool paused;
 	int gravityMode;
 	int airMode;
+	int edgeMode;
 	
 	//Signs
 	std::vector<sign> signs;
@@ -53,7 +74,12 @@ public:
 	//Element palette
 	typedef std::pair<std::string, int> PaletteItem;
 	std::vector<PaletteItem> palette;
-	
+
+	// author information
+	Json::Value authors;
+
+	int pmapbits;
+
 	GameSave();
 	GameSave(GameSave & save);
 	GameSave(int width, int height);
@@ -62,9 +88,11 @@ public:
 	GameSave(std::vector<unsigned char> data);
 	~GameSave();
 	void setSize(int width, int height);
-	char * Serialise(int & dataSize);
+	char * Serialise(unsigned int & dataSize);
 	std::vector<char> Serialise();
+	vector2d Translate(vector2d translate);
 	void Transform(matrix2d transform, vector2d translate);
+	void Transform(matrix2d transform, vector2d translate, vector2d translateReal, int newWidth, int newHeight);
 
 	void Expand();
 	void Collapse();
@@ -89,18 +117,25 @@ public:
 private:
 	bool expanded;
 	bool hasOriginalData;
-	float * fanVelXPtr;
-	float * fanVelYPtr;
-	unsigned char * blockMapPtr;
+	// number of pixels translated. When translating CELL pixels, shift all CELL grids
+	vector2d translated;
 
 	std::vector<char> originalData;
 
+	void InitData();
+	void InitVars();
+	void CheckBsonFieldUser(bson_iterator iter, const char *field, unsigned char **data, unsigned int *fieldLen);
+	void CheckBsonFieldBool(bson_iterator iter, const char *field, bool *flag);
+	void CheckBsonFieldInt(bson_iterator iter, const char *field, int *setting);
+	template <typename T> T ** Allocate2DArray(int blockWidth, int blockHeight, T defaultVal);
+	template <typename T> void Deallocate2DArray(T ***array, int blockHeight);
 	void dealloc();
 	void read(char * data, int dataSize);
 	void readOPS(char * data, int dataLength);
 	void readPSv(char * data, int dataLength);
-	char * serialiseOPS(int & dataSize);
-	//serialisePSv();
+	char * serialiseOPS(unsigned int & dataSize);
+	void ConvertJsonToBson(bson *b, Json::Value j, int depth = 0);
+	void ConvertBsonToJson(bson_iterator *b, Json::Value *j, int depth = 0);
 };
 
 #endif

@@ -89,7 +89,7 @@ void VideoBuffer::Resize(int width, int height, bool resample, bool fixedRatio)
 int VideoBuffer::SetCharacter(int x, int y, int c, int r, int g, int b, int a)
 {
 	int i, j, w, bn = 0, ba = 0;
-	char *rp = font_data + font_ptrs[c];
+	unsigned char *rp = font_data + font_ptrs[c];
 	w = *(rp++);
 	for (j=0; j<FONT_H; j++)
 		for (i=0; i<w; i++)
@@ -109,7 +109,7 @@ int VideoBuffer::SetCharacter(int x, int y, int c, int r, int g, int b, int a)
 int VideoBuffer::BlendCharacter(int x, int y, int c, int r, int g, int b, int a)
 {
 	int i, j, w, bn = 0, ba = 0;
-	char *rp = font_data + font_ptrs[c];
+	unsigned char *rp = font_data + font_ptrs[c];
 	w = *(rp++);
 	for (j=0; j<FONT_H; j++)
 		for (i=0; i<w; i++)
@@ -129,7 +129,7 @@ int VideoBuffer::BlendCharacter(int x, int y, int c, int r, int g, int b, int a)
 int VideoBuffer::AddCharacter(int x, int y, int c, int r, int g, int b, int a)
 {
 	int i, j, w, bn = 0, ba = 0;
-	char *rp = font_data + font_ptrs[c];
+	unsigned char *rp = font_data + font_ptrs[c];
 	w = *(rp++);
 	for (j=0; j<FONT_H; j++)
 		for (i=0; i<w; i++)
@@ -734,33 +734,6 @@ int Graphics::CharIndexAtPosition(char *s, int positionX, int positionY)
 }
 
 
-int Graphics::textposxy(char *s, int width, int w, int h)
-{
-	int x=0,y=0,n=0,cw, wordlen, charspace;
-	while (*s)
-	{
-		wordlen = strcspn(s," .,!?\n");
-		charspace = textwidthx(s, width-x);
-		if (charspace<wordlen && wordlen && width-x<width/3)
-		{
-			x = 0;
-			y += FONT_H+2;
-		}
-		for (; *s && --wordlen>=-1; s++)
-		{
-			cw = font_data[font_ptrs[(int)(*(unsigned char *)s)]];
-			if ((x+(cw/2) >= w && y+6 >= h)||(y+6 >= h+FONT_H+2))
-				return n++;
-			x += cw;
-			if (x>=width) {
-				x = 0;
-				y += FONT_H+2;
-			}
-			n++;
-		}
-	}
-	return n;
-}
 int Graphics::textwrapheight(char *s, int width)
 {
 	int x=0, height=FONT_H+2, cw;
@@ -826,7 +799,7 @@ void Graphics::textsize(const char * s, int & width, int & height)
 		}
 		else if (*s == '\x0F')
 		{
-			if(!s[1] || !s[2] || !s[1]) break;
+			if(!s[1] || !s[2] || !s[3]) break;
 			s+=3;
 		}
 		else if (*s == '\b')
@@ -1119,11 +1092,12 @@ void Graphics::draw_icon(int x, int y, Icon icon, unsigned char alpha, bool inve
 	}
 }
 
-void Graphics::draw_rgba_image(unsigned char *data, int x, int y, float alpha)
+void Graphics::draw_rgba_image(const unsigned char *data_, int x, int y, float alpha)
 {
 	unsigned char w, h;
 	int i, j;
 	unsigned char r, g, b, a;
+	unsigned char *data = (unsigned char*)data_;
 	if (!data) return;
 	w = *(data++)&0xFF;
 	h = *(data++)&0xFF;

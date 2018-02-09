@@ -24,12 +24,9 @@ public:
 	Button(Point position = Point(0, 0), Point size = Point(0, 0), std::string buttonText = "", std::string toolTip = "");
 	virtual ~Button();
 
-	bool Toggleable;
-	bool Enabled;
-
 	virtual void OnMouseClick(int x, int y, unsigned int button);
 	virtual void OnMouseUnclick(int x, int y, unsigned int button);
-	//virtual void OnMouseUp(int x, int y, unsigned int button);
+	virtual void OnMouseUp(int x, int y, unsigned int button);
 
 	virtual void OnMouseEnter(int x, int y);
 	virtual void OnMouseHover(int x, int y);
@@ -37,7 +34,7 @@ public:
 
 	virtual void Draw(const Point& screenPos);
 
-	virtual void TextPosition();
+	virtual void TextPosition(std::string);
 	inline bool GetState() { return state; }
 	virtual void DoAction(); //action of button what ever it may be
 	virtual void DoAltAction(); //action of button what ever it may be
@@ -53,9 +50,9 @@ public:
 	void SetToolTip(std::string newToolTip) { toolTip = newToolTip; }
 protected:
 
+	std::string ButtonText;
 	std::string toolTip;
 	std::string buttonDisplayText;
-	std::string ButtonText;
 
 	bool isButtonDown, isAltButtonDown, state, isMouseInside, isTogglable, toggle;
 	ButtonAction * actionCallback;

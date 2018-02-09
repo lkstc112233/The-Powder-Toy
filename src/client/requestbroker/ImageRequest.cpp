@@ -1,5 +1,6 @@
 #include <iostream>
 #include <typeinfo>
+#include <ctime>
 #include "ImageRequest.h"
 #include "graphics/Graphics.h"
 #include "client/HTTP.h"
@@ -28,9 +29,9 @@ RequestBroker::ProcessResponse ImageRequest::Process(RequestBroker & rb)
 		if((*iter).first == URL)
 		{
 			image = (*iter).second;
-#ifdef DEBUG
+/*#ifdef DEBUG
 			std::cout << typeid(*this).name() << " " << URL << " found in cache" << std::endl;
-#endif
+#endif*/
 		}
 	}
 
@@ -73,11 +74,10 @@ RequestBroker::ProcessResponse ImageRequest::Process(RequestBroker & rb)
 				}
 				else
 				{
-	#ifdef DEBUG
+#ifdef DEBUG
 					std::cout << typeid(*this).name() << " Request for " << URL << " failed with status " << status << std::endl;
-	#endif	
-					if(data)
-						free(data);
+#endif	
+					free(data);
 
 					return RequestBroker::Failed;
 				}
@@ -93,9 +93,9 @@ RequestBroker::ProcessResponse ImageRequest::Process(RequestBroker & rb)
 				ImageRequest * otherReq = (ImageRequest*)(*iter);
 				if(otherReq->URL == URL && otherReq != this)
 				{
-	#ifdef DEBUG
+/*#ifdef DEBUG
 					std::cout << typeid(*this).name() << " Request for " << URL << " found, appending." << std::endl;
-	#endif
+#endif*/
 					//Add the current listener to the item already being requested
 					(*iter)->Children.push_back(this);
 					return RequestBroker::Duplicate;
@@ -103,9 +103,9 @@ RequestBroker::ProcessResponse ImageRequest::Process(RequestBroker & rb)
 			}
 
 			//If it's not already being requested, request it
-	#ifdef DEBUG
+/*#ifdef DEBUG
 			std::cout << typeid(*this).name() << " Creating new request for " << URL << std::endl;
-	#endif
+#endif*/
 			HTTPContext = http_async_req_start(NULL, (char *)URL.c_str(), NULL, 0, 0);
 			RequestTime = time(NULL);
 		}
@@ -114,7 +114,7 @@ RequestBroker::ProcessResponse ImageRequest::Process(RequestBroker & rb)
 	if(image)
 	{
 
-		//Create a copy, to seperate from the cache
+		//Create a copy, to separate from the cache
 		std::vector<Request *> children(Children.begin(), Children.end());
 		Children.clear();
 

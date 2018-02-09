@@ -8,7 +8,7 @@ Element_PSNS::Element_PSNS()
 	MenuVisible = 1;
 	MenuSection = SC_SENSOR;
 	Enabled = 1;
-	
+
 	Advection = 0.0f;
 	AirDrag = 0.00f * CFDS;
 	AirLoss = 0.96f;
@@ -18,21 +18,20 @@ Element_PSNS::Element_PSNS()
 	Diffusion = 0.00f;
 	HotAir = 0.000f	* CFDS;
 	Falldown = 0;
-	
+
 	Flammable = 0;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 1;
-	
+
 	Weight = 100;
-	
+
 	Temperature = 277.15f;
 	HeatConduct = 0;
 	Description = "Pressure sensor, creates a spark when the pressure is greater than its temperature.";
-	
-	State = ST_SOLID;
+
 	Properties = TYPE_SOLID;
-	
+
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = IPH;
@@ -41,9 +40,8 @@ Element_PSNS::Element_PSNS()
 	LowTemperatureTransition = NT;
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
-	
+
 	Update = &Element_PSNS::update;
-	
 }
 
 //#TPT-Directive ElementHeader Element_PSNS static int update(UPDATE_FUNC_ARGS)
@@ -60,14 +58,14 @@ int Element_PSNS::update(UPDATE_FUNC_ARGS)
 					r = pmap[y+ry][x+rx];
 					if (!r)
 						continue;
-					rt = r&0xFF;
-					if (sim->parts_avg(i,r>>8,PT_INSL) != PT_INSL)
+					rt = TYP(r);
+					if (sim->parts_avg(i,ID(r),PT_INSL) != PT_INSL)
 					{
-						if ((sim->elements[rt].Properties&PROP_CONDUCTS) && !(rt==PT_WATR||rt==PT_SLTW||rt==PT_NTCT||rt==PT_PTCT||rt==PT_INWR) && parts[r>>8].life==0)
+						if ((sim->elements[rt].Properties&PROP_CONDUCTS) && !(rt==PT_WATR||rt==PT_SLTW||rt==PT_NTCT||rt==PT_PTCT||rt==PT_INWR) && parts[ID(r)].life==0)
 						{
-							parts[r>>8].life = 4;
-							parts[r>>8].ctype = rt;
-							sim->part_change_type(r>>8,x+rx,y+ry,PT_SPRK);
+							parts[ID(r)].life = 4;
+							parts[ID(r)].ctype = rt;
+							sim->part_change_type(ID(r),x+rx,y+ry,PT_SPRK);
 						}
 					}
 				}

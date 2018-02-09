@@ -1,23 +1,24 @@
 #pragma once
 
+#include <string>
+#include "common/tpt-compat.h"
 #include "Appearance.h"
 #include "Point.h"
-#include "Window.h"
-#include "Platform.h"
 
+class Graphics;
 namespace ui
 {
 	class ContextMenu;
 	class Window;
 	class Panel;
-	
+
 	/* class Component
-	 * 
+	 *
 	 * An interactive UI component that can be added to a state or an XComponent*.
 	 * *See sys::XComponent
 	 */
-	class Component  
-	{	
+	class Component
+	{
 	private:
 		Window* parentstate_;
 		Panel* _parent;
@@ -27,12 +28,13 @@ namespace ui
 		ui::Point textSize;
 		ui::Point iconPosition;
 		ui::ContextMenu * menu;
+		Graphics * GetGraphics();
 	public:
 		Component(Window* parent_state);
 		Component(Point position, Point size);
 		Component();
 		virtual ~Component();
-		
+
 		void* UserData;
 		inline Window* const GetParentWindow() const { return parentstate_; }
 		bool IsFocused() const;
@@ -41,18 +43,18 @@ namespace ui
 
 		Point Position;
 		Point Size;
-		bool Locked;
+		bool Enabled;
 		bool Visible;
 
 		ui::Appearance Appearance;
 		//virtual void SetAppearance(ui::Appearance);
 		//ui::Appearance GetAppearance();
 		virtual void TextPosition(std::string);
-		
+
 		void Refresh();
 
 		Point GetScreenPos();
-		
+
 		/* See the parent of this component.
 		 * If new_parent is NULL, this component will have no parent. (THIS DOES NOT delete THE COMPONENT. See XComponent::RemoveChild)
 		 */
@@ -63,12 +65,12 @@ namespace ui
 		inline Panel* const GetParent() const { return _parent; }
 
 		virtual void OnContextMenuAction(int item);
-		
+
 		//UI functions:
 		/*
 			void Tick(float dt);
 			void Draw(const Point& screenPos);
-			
+
 			void OnMouseHover(int localx, int localy);
 			void OnMouseMoved(int localx, int localy, int dx, int dy);
 			void OnMouseMovedInside(int localx, int localy, int dx, int dy);
@@ -90,17 +92,17 @@ namespace ui
 		//	dt: The change in time.
 		///
 		virtual void Tick(float dt);
-		
+
 		///
 		// Called: When ready to draw.
 		// Params:
 		// 	None
 		///
 		virtual void Draw(const Point& screenPos);
-		
-		
-		
-		
+
+
+
+
 		///
 		// Called: When the mouse is currently hovering over the item. (Called every tick)
 		// Params:
@@ -108,7 +110,7 @@ namespace ui
 		//	localy: Local mouse Y position.
 		///
 		virtual void OnMouseHover(int localx, int localy);
-		
+
 		///
 		// Called: When the mouse moves.
 		// Params:
@@ -118,7 +120,7 @@ namespace ui
 		// 	dy: Mouse Y delta.
 		///
 		virtual void OnMouseMoved(int localx, int localy, int dx, int dy);
-		
+
 		///
 		// Called: When the mouse moves.
 		// Params:
@@ -128,7 +130,7 @@ namespace ui
 		// 	dy: Mouse Y delta.
 		///
 		virtual void OnMouseMovedInside(int localx, int localy, int dx, int dy);
-		
+
 		///
 		// Called: When the mouse moves on top of the item.
 		// Params:
@@ -138,7 +140,7 @@ namespace ui
 		// 	dy: Mouse Y delta.
 		///
 		virtual void OnMouseEnter(int localx, int localy);
-		
+
 		///
 		// Called: When the mouse leaves the item.
 		// Params:
@@ -146,7 +148,7 @@ namespace ui
 		//	localy: Local mouse Y position.
 		///
 		virtual void OnMouseLeave(int localx, int localy);
-		
+
 		///
 		// Called: When a mouse button is pressed.
 		// Params:
@@ -155,7 +157,7 @@ namespace ui
 		// 	button: The button that is being held down.
 		///
 		virtual void OnMouseDown(int x, int y, unsigned button);
-		
+
 		///
 		// Called: When a mouse button is released.
 		// Params:
@@ -164,7 +166,7 @@ namespace ui
 		// 	button: The button that is being released.
 		///
 		virtual void OnMouseUp(int x, int y, unsigned button);
-		
+
 		///
 		// Called: When a mouse button is pressed on top of the item.
 		// Params:
@@ -173,7 +175,7 @@ namespace ui
 		// 	button: The button that is being held down.
 		///
 		virtual void OnMouseClick(int localx, int localy, unsigned button);
-		
+
 		///
 		// Called: When a mouse button is released on top of the item.
 		// Params:
@@ -182,7 +184,7 @@ namespace ui
 		// 	button: The button that is being released.
 		///
 		virtual void OnMouseUnclick(int localx, int localy, unsigned button);
-		
+
 		///
 		// Called: When the mouse wheel moves/changes.
 		// Params:
@@ -191,7 +193,7 @@ namespace ui
 		// 	d: The mouse wheel movement value.
 		///
 		virtual void OnMouseWheel(int localx, int localy, int d);
-		
+
 		///
 		// Called: When the mouse wheel moves/changes on top of the item.
 		// Params:
@@ -200,7 +202,7 @@ namespace ui
 		// 	d: The mouse wheel movement value.
 		///
 		virtual void OnMouseWheelInside(int localx, int localy, int d);
-		
+
 		///
 		// Called: When a key is pressed.
 		// Params:
@@ -210,7 +212,7 @@ namespace ui
 		// 	alt: Alternate key is down.
 		///
 		virtual void OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt);
-		
+
 		///
 		// Called: When a key is released.
 		// Params:

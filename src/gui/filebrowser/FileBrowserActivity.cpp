@@ -1,5 +1,6 @@
 #include <sstream>
 #include <iostream>
+#include <algorithm>
 #include "FileBrowserActivity.h"
 #include "gui/interface/Label.h"
 #include "gui/interface/Textbox.h"
@@ -58,7 +59,11 @@ class LoadFilesTask: public Task
 	virtual bool doWork()
 	{
 		std::vector<std::string> files = Client::Ref().DirectorySearch(directory, search, ".cps");
-
+		std::sort(files.rbegin(), files.rend(), [](std::string a, std::string b) {
+			std::transform(a.begin(), a.end(), a.begin(), ::tolower);
+			std::transform(b.begin(), b.end(), b.begin(), ::tolower);
+			return a < b;
+		});
 
 		notifyProgress(-1);
 		for(std::vector<std::string>::iterator iter = files.begin(), end = files.end(); iter != end; ++iter)
@@ -137,6 +142,7 @@ FileBrowserActivity::FileBrowserActivity(std::string directory, FileSelectedCall
 	FocusComponent(textField);
 
 	itemList = new ui::ScrollPanel(ui::Point(4, 45), ui::Point(Size.X-8, Size.Y-53));
+	itemList->Visible = false;
 	AddComponent(itemList);
 
 	progressBar = new ui::ProgressBar(ui::Point((Size.X-200)/2, 45+(Size.Y-66)/2), ui::Point(200, 17));
@@ -204,25 +210,26 @@ void FileBrowserActivity::RenameSave(SaveFile * file)
 
 void FileBrowserActivity::loadDirectory(std::string directory, std::string search)
 {
-	for(int i = 0; i < components.size(); i++)
+	for (size_t i = 0; i < components.size(); i++)
 	{
 		RemoveComponent(components[i]);
 		itemList->RemoveChild(components[i]);
 	}
 
-	for(std::vector<ui::Component*>::iterator iter = componentsQueue.begin(), end = componentsQueue.end(); iter != end; ++iter)
+	for (std::vector<ui::Component*>::iterator iter = componentsQueue.begin(), end = componentsQueue.end(); iter != end; ++iter)
 	{
 		delete *iter;
 	}
 	componentsQueue.clear();
 
-	for(std::vector<SaveFile*>::iterator iter = files.begin(), end = files.end(); iter != end; ++iter)
+	for (std::vector<SaveFile*>::iterator iter = files.begin(), end = files.end(); iter != end; ++iter)
 	{
 		delete *iter;
 	}
 	files.clear();
 
 	infoText->Visible = false;
+	itemList->Visible = false;
 	progressBar->Visible = true;
 	progressBar->SetProgress(-1);
 	progressBar->SetStatus("Loading files");
@@ -239,12 +246,14 @@ void FileBrowserActivity::NotifyDone(Task * task)
 	totalFiles = files.size();
 	delete loadFiles;
 	loadFiles = NULL;
-	if(!files.size())
+	if (!files.size())
 	{
 		progressBar->Visible = false;
 		infoText->Visible = true;
 	}
-	for(int i = 0; i < components.size(); i++)
+	else
+		itemList->Visible = true;
+	for (size_t i = 0; i < components.size(); i++)
 	{
 		delete components[i];
 	}
@@ -253,7 +262,7 @@ void FileBrowserActivity::NotifyDone(Task * task)
 
 void FileBrowserActivity::OnMouseDown(int x, int y, unsigned button)
 {
-	if(!(x > Position.X && y > Position.Y && y < Position.Y+Size.Y && x < Position.X+Size.X)) //Clicked outside window
+	if (!(x > Position.X && y > Position.Y && y < Position.Y+Size.Y && x < Position.X+Size.X)) //Clicked outside window
 		Exit();
 }
 
@@ -323,7 +332,7 @@ void FileBrowserActivity::OnTick(float dt)
 
 void FileBrowserActivity::OnDraw()
 {
-	Graphics * g = ui::Engine::Ref().g;
+	Graphics * g = GetGraphics();
 
 	//Window Background+Outline
 	g->clearrect(Position.X-2, Position.Y-2, Size.X+4, Size.Y+4);
@@ -332,6 +341,5 @@ void FileBrowserActivity::OnDraw()
 
 FileBrowserActivity::~FileBrowserActivity()
 {
-	if(callback)
-		delete callback;
+	delete callback;
 }

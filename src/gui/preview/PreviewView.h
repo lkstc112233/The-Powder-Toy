@@ -2,6 +2,8 @@
 #define PREVIEWVIEW_H_
 
 #include <vector>
+#include <set>
+#include <string>
 #include "Comment.h"
 #include "gui/interface/Window.h"
 #include "gui/preview/PreviewController.h"
@@ -33,6 +35,7 @@ class PreviewView: public ui::Window {
 	ui::Button * reportButton;
 	ui::Button * submitCommentButton;
 	ui::Textbox * addCommentBox;
+	ui::Label * commentWarningLabel;
 	ui::Label * saveNameLabel;
 	ui::Label * authorDateLabel;
 	ui::AvatarButton * avatarButton;
@@ -47,7 +50,10 @@ class PreviewView: public ui::Window {
 	std::vector<ui::Component*> commentTextComponents;
 	int votesUp;
 	int votesDown;
+	bool userIsAuthor;
 	bool doOpen;
+	bool doError;
+	std::string doErrorMessage;
 	bool showAvatars;
 	bool prevPage;
 
@@ -56,10 +62,15 @@ class PreviewView: public ui::Window {
 	float commentBoxPositionY;
 	float commentBoxSizeX;
 	float commentBoxSizeY;
+	bool commentHelpText;
+	
+	std::set<std::string> swearWords;
 
 	void displayComments();
 	void commentBoxAutoHeight();
 	void submitComment();
+	bool CheckSwearing(std::string text);
+	void CheckComment();
 public:
 	void AttachController(PreviewController * controller);
 	PreviewView();
@@ -67,6 +78,7 @@ public:
 	void NotifyCommentsChanged(PreviewModel * sender);
 	void NotifyCommentsPageChanged(PreviewModel * sender);
 	void NotifyCommentBoxEnabledChanged(PreviewModel * sender);
+	void SaveLoadingError(std::string errorMessage);
 	virtual void OnDraw();
 	virtual void DoDraw();
 	virtual void OnTick(float dt);

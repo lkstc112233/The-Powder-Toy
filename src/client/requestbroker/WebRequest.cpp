@@ -37,6 +37,7 @@ RequestBroker::ProcessResponse WebRequest::Process(RequestBroker & rb)
 			int status, data_size;
 			data = http_async_req_stop(HTTPContext, &status, &data_size);
 
+			Client::Ref().ParseServerReturn(NULL, status, true);
 			if (status == 200 && data)
 			{
 				void * resultObject = new std::vector<unsigned char>(data, data+data_size);
@@ -50,18 +51,19 @@ RequestBroker::ProcessResponse WebRequest::Process(RequestBroker & rb)
 				}
 				else
 				{
+#ifdef DEBUG
 					std::cout << typeid(*this).name() << " Request for " << URL << " could not be parsed: " << data << std::endl;
+#endif
 					free(data);
 					return RequestBroker::Failed;
 				}
 			}
 			else
 			{
-//#ifdef DEBUG
+#ifdef DEBUG
 				std::cout << typeid(*this).name() << " Request for " << URL << " failed with status " << status << std::endl;
-//#endif	
-				if(data)
-					free(data);
+#endif
+				free(data);
 
 				return RequestBroker::Failed;
 			}
@@ -69,7 +71,9 @@ RequestBroker::ProcessResponse WebRequest::Process(RequestBroker & rb)
 	}
 	else 
 	{
+#ifdef DEBUG
 		std::cout << typeid(*this).name() << " New Request for " << URL << std::endl;
+#endif
 		if(Post)
 		{
 			char ** postNames = new char*[PostData.size() + 1];
@@ -94,16 +98,18 @@ RequestBroker::ProcessResponse WebRequest::Process(RequestBroker & rb)
 			}
 			postNames[i] = NULL;
 
-			if(Client::Ref().GetAuthUser().ID)
+			if(Client::Ref().GetAuthUser().UserID)
 			{
+#ifdef DEBUG
 				std::cout << typeid(*this).name() << " Authenticated " << std::endl;
+#endif
 				User user = Client::Ref().GetAuthUser();
 				char userName[12];
 				char *userSession = new char[user.SessionID.length() + 1];
-				std::strcpy(userName, format::NumberToString<int>(user.ID).c_str());
+				std::strcpy(userName, format::NumberToString<int>(user.UserID).c_str());
 				std::strcpy(userSession, user.SessionID.c_str());
 				HTTPContext = http_multipart_post_async((char*)URL.c_str(), postNames, postData, postLength, userName, NULL, userSession);
-				delete userSession;
+				delete[] userSession;
 			}
 			else
 			{
@@ -114,12 +120,12 @@ RequestBroker::ProcessResponse WebRequest::Process(RequestBroker & rb)
 		else
 		{
 			HTTPContext = http_async_req_start(NULL, (char *)URL.c_str(), NULL, 0, 0);
-			if(Client::Ref().GetAuthUser().ID)
+			if(Client::Ref().GetAuthUser().UserID)
 			{
 				User user = Client::Ref().GetAuthUser();
 				char userName[12];
 				char *userSession = new char[user.SessionID.length() + 1];
-				std::strcpy(userName, format::NumberToString<int>(user.ID).c_str());
+				std::strcpy(userName, format::NumberToString<int>(user.UserID).c_str());
 				std::strcpy(userSession, user.SessionID.c_str());
 				http_auth_headers(HTTPContext, userName, NULL, userSession);
 				delete[] userSession;

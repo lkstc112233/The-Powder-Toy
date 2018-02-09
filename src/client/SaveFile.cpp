@@ -4,14 +4,15 @@
 #include "gui/search/Thumbnail.h"
 
 SaveFile::SaveFile(SaveFile & save):
-	gameSave(NULL),
 	thumbnail(NULL),
+	gameSave(NULL),
 	filename(save.filename),
-	displayName(save.displayName)
+	displayName(save.displayName),
+	loadingError(save.loadingError)
 {
-	if(save.gameSave)
+	if (save.gameSave)
 		gameSave = new GameSave(*save.gameSave);
-	if(save.thumbnail)
+	if (save.thumbnail)
 		thumbnail = new Thumbnail(*save.thumbnail);
 }
 
@@ -26,10 +27,11 @@ void SaveFile::SetThumbnail(Thumbnail * thumb)
 }
 
 SaveFile::SaveFile(std::string filename):
-		filename(filename),
-		displayName(filename),
-		gameSave(NULL),
-		thumbnail(NULL)
+	thumbnail(NULL),
+	gameSave(NULL),
+	filename(filename),
+	displayName(filename),
+	loadingError("")
 {
 
 }
@@ -64,10 +66,18 @@ void SaveFile::SetDisplayName(std::string displayName)
 	this->displayName = displayName;
 }
 
+std::string SaveFile::GetError()
+{
+	return loadingError;
+}
+
+void SaveFile::SetLoadingError(std::string error)
+{
+	loadingError = error;
+}
+
 SaveFile::~SaveFile() {
-	if(gameSave)
-		delete gameSave;
-	if(thumbnail)
-		delete thumbnail;
+	delete gameSave;
+	delete thumbnail;
 }
 

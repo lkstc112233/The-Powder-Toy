@@ -3,8 +3,9 @@
 
 #include "Border.h"
 #include "Colour.h"
-#include "graphics/Graphics.h"
+#include "graphics/Icons.h"
 
+class VideoBuffer;
 namespace ui
 {
 	class Appearance
@@ -38,6 +39,7 @@ namespace ui
 		ui::Colour BorderHover;
 		ui::Colour BorderInactive;
 		ui::Colour BorderActive;
+		ui::Colour BorderFavorite;
 		ui::Colour BorderDisabled;
 		
 		ui::Border Margin;

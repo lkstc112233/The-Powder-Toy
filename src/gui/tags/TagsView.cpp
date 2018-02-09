@@ -1,6 +1,7 @@
 #include "client/Client.h"
 #include "TagsView.h"
 
+#include "graphics/Graphics.h"
 #include "gui/dialogues/ErrorMessage.h"
 #include "TagsController.h"
 #include "TagsModel.h"
@@ -56,7 +57,7 @@ TagsView::TagsView():
 	addButton->SetActionCallback(new AddTagAction(this));
 	AddComponent(addButton);
 
-	if (!Client::Ref().GetAuthUser().ID)
+	if (!Client::Ref().GetAuthUser().UserID)
 		addButton->Enabled = false;
 
 	title = new ui::Label(ui::Point(5, 5), ui::Point(185, 28), "Manage tags:    \bgTags are only to \nbe used to improve search results");
@@ -68,14 +69,14 @@ TagsView::TagsView():
 
 void TagsView::OnDraw()
 {
-	Graphics * g = ui::Engine::Ref().g;
+	Graphics * g = GetGraphics();
 	g->clearrect(Position.X-2, Position.Y-2, Size.X+3, Size.Y+3);
 	g->drawrect(Position.X, Position.Y, Size.X, Size.Y, 255, 255, 255, 255);
 }
 
 void TagsView::NotifyTagsChanged(TagsModel * sender)
 {
-	for(int i = 0; i < tags.size(); i++)
+	for (size_t i = 0; i < tags.size(); i++)
 	{
 		RemoveComponent(tags[i]);
 		delete tags[i];
@@ -134,8 +135,8 @@ void TagsView::OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool
 {
 	switch(key)
 	{
-	case KEY_ENTER:
-	case KEY_RETURN:
+	case SDLK_KP_ENTER:
+	case SDLK_RETURN:
 		if(IsFocused(tagInput))
 		{
 			addTag();

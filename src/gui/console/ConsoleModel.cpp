@@ -19,12 +19,12 @@ void ConsoleModel::AddObserver(ConsoleView * observer)
 	observer->NotifyPreviousCommandsChanged(this);
 }
 
-int ConsoleModel::GetCurrentCommandIndex()
+size_t ConsoleModel::GetCurrentCommandIndex()
 {
 	return currentCommandIndex;
 }
 
-void ConsoleModel::SetCurrentCommandIndex(int index)
+void ConsoleModel::SetCurrentCommandIndex(size_t index)
 {
 	currentCommandIndex = index;
 	notifyCurrentCommandChanged();
@@ -32,7 +32,7 @@ void ConsoleModel::SetCurrentCommandIndex(int index)
 
 ConsoleCommand ConsoleModel::GetCurrentCommand()
 {
-	if(currentCommandIndex < 0 || currentCommandIndex >= previousCommands.size())
+	if (currentCommandIndex >= previousCommands.size())
 	{
 		return ConsoleCommand("", 0, "");
 	}
@@ -55,7 +55,7 @@ std::deque<ConsoleCommand> ConsoleModel::GetPreviousCommands()
 
 void ConsoleModel::notifyPreviousCommandsChanged()
 {
-	for(int i = 0; i < observers.size(); i++)
+	for (size_t i = 0; i < observers.size(); i++)
 	{
 		observers[i]->NotifyPreviousCommandsChanged(this);
 	}
@@ -63,13 +63,13 @@ void ConsoleModel::notifyPreviousCommandsChanged()
 
 void ConsoleModel::notifyCurrentCommandChanged()
 {
-	for(int i = 0; i < observers.size(); i++)
+	for (size_t i = 0; i < observers.size(); i++)
 	{
 		observers[i]->NotifyCurrentCommandChanged(this);
 	}
 }
 
 ConsoleModel::~ConsoleModel() {
-	Client::Ref().SetPref("Console.History", std::vector<std::string>(previousCommands.begin(), previousCommands.end()));
+	Client::Ref().SetPref("Console.History", std::vector<Json::Value>(previousCommands.begin(), previousCommands.end()));
 }
 

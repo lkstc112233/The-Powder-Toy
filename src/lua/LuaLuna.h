@@ -15,6 +15,9 @@ public:
 		lua_newtable(L);
 		int methods = lua_gettop(L);
 
+		// push global table to the stack, so we can add the component APIs to it
+		lua_pushglobaltable(L);
+		 
 		luaL_newmetatable(L, T::className);
 		int metatable = lua_gettop(L);
 
@@ -22,7 +25,7 @@ public:
 		// scripts can add functions written in Lua.
 		lua_pushstring(L, T::className);
 		lua_pushvalue(L, methods);
-		lua_settable(L, LUA_GLOBALSINDEX);
+		lua_settable(L, -4);
 
 		lua_pushliteral(L, "__metatable");
 		lua_pushvalue(L, methods);
@@ -60,7 +63,7 @@ public:
 			lua_settable(L, methods);
 		}
 
-		lua_pop(L, 2);  // drop metatable and method table
+		lua_pop(L, 3);  // pop global table, metatable, and method table
 	}
 
 	// get userdata from Lua stack and return pointer to T object
@@ -122,6 +125,8 @@ private:
 	// push onto the Lua stack a userdata containing a pointer to T object
 	static int new_T(lua_State * L)
 	{
+		if (!lua_gettop(L))
+			return 0;
 		lua_remove(L, 1);   // use classname:new(), instead of classname.new()
 
 		T *obj = new T(L);  // call constructor for T objects

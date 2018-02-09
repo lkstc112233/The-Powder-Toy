@@ -12,25 +12,39 @@
 
 //VersionInfoStart
 #ifndef SAVE_VERSION
-#define SAVE_VERSION 90
+#define SAVE_VERSION 92
 #endif
 
 #ifndef MINOR_VERSION
-#define MINOR_VERSION 2
+#define MINOR_VERSION 5
 #endif
 
 #ifndef BUILD_NUM
-#define BUILD_NUM 322
+#define BUILD_NUM 336
 #endif
 
 #ifndef SNAPSHOT_ID
 #define SNAPSHOT_ID 0
 #endif
+
+// Mod ID, used on the http://starcatcher.us/TPT build server
+// The build server will compile for all platforms for you, and send updates in game
+// See jacob1 to get a mod ID
+#ifndef MOD_ID
+#define MOD_ID 0
+#endif
+
+#if defined(SNAPSHOT) || defined(DEBUG)
+#define FUTURE_SAVE_VERSION 93
+#define FUTURE_MINOR_VERSION 0
+#endif
 //VersionInfoEnd
 
 //#define IGNORE_UPDATES //uncomment this for mods, to not get any update notifications
 
+#if !(defined(MACOSX) && defined(DEBUG))
 #define HIGH_QUALITY_RESAMPLE			//High quality image resampling, slower but much higher quality than my terribad linear interpolation
+#endif
 
 #if defined(SNAPSHOT)
 #define IDENT_RELTYPE "S"
@@ -72,7 +86,6 @@
 #define MTOS(str) MTOS_EXPAND(str)
 
 #define SERVER "powdertoy.co.uk"
-#define SCRIPTSERVER "powdertoy.co.uk"
 #define STATICSERVER "static.powdertoy.co.uk"
 
 #define LOCAL_SAVE_DIR "Saves"
@@ -105,8 +118,8 @@
 #define YRES	384
 #define NPART XRES*YRES
 
-#define XCNTR   306
-#define YCNTR   192
+#define XCNTR   XRES/2
+#define YCNTR   YRES/2
 
 #define WINDOWW (XRES+BARSIZE)
 #define WINDOWH (YRES+MENUSIZE)
@@ -150,36 +163,6 @@
 #define GLASS_IOR		1.9
 #define GLASS_DISP		0.07
 
-//some compatibility stuff for non-standard compilers
-#if defined(WIN) && !defined(strcasecmp)
-#define strcasecmp stricmp
-#endif
-#if defined(_MSC_VER)
-#if _MSC_VER < 1800
-#define fmin min
-#define fminf min
-#define fmax max
-#define fmaxf max
-#else
-#include <algorithm>
-#endif
-#endif
-
-#if defined(_MSC_VER)
-#define TPT_INLINE _inline
-#elif defined(__llvm__)
-#define TPT_INLINE
-#else
-#define TPT_INLINE inline
-#endif
-
-#if defined(WIN) && defined(__GNUC__)
-#define TH_ENTRY_POINT __attribute__((force_align_arg_pointer)) 
-#else
-#define TH_ENTRY_POINT
-#endif
-
 #define SDEUT
-//#define REALHEAT
 
 #endif /* CONFIG_H */

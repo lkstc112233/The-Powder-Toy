@@ -6,9 +6,9 @@ Element_FSEP::Element_FSEP()
 	Name = "FSEP";
 	Colour = PIXPACK(0x63AD5F);
 	MenuVisible = 1;
-	MenuSection = SC_POWDERS;
+	MenuSection = SC_EXPLOSIVE;
 	Enabled = 1;
-	
+
 	Advection = 0.7f;
 	AirDrag = 0.02f * CFDS;
 	AirLoss = 0.96f;
@@ -18,21 +18,20 @@ Element_FSEP::Element_FSEP()
 	Diffusion = 0.00f;
 	HotAir = 0.000f	* CFDS;
 	Falldown = 1;
-	
+
 	Flammable = 0;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 30;
-	
+
 	Weight = 70;
-	
+
 	Temperature = R_TEMP+0.0f	+273.15f;
 	HeatConduct = 70;
 	Description = "Fuse Powder. Burns slowly like FUSE.";
-	
-	State = ST_SOLID;
+
 	Properties = TYPE_PART;
-	
+
 	LowPressure = IPL;
 	LowPressureTransition = NT;
 	HighPressure = IPH;
@@ -41,14 +40,13 @@ Element_FSEP::Element_FSEP()
 	LowTemperatureTransition = NT;
 	HighTemperature = ITH;
 	HighTemperatureTransition = NT;
-	
+
 	Update = &Element_FSEP::update;
-	
 }
 
 //#TPT-Directive ElementHeader Element_FSEP static int update(UPDATE_FUNC_ARGS)
 int Element_FSEP::update(UPDATE_FUNC_ARGS)
- {
+{
 	int r, rx, ry;
 	if (parts[i].life<=0) {
 		r = sim->create_part(i, x, y, PT_PLSM);
@@ -72,7 +70,7 @@ int Element_FSEP::update(UPDATE_FUNC_ARGS)
 					r = pmap[y+ry][x+rx];
 					if (!r)
 						continue;
-					if (((r&0xFF)==PT_SPRK || (parts[i].temp>=(273.15+400.0f))) && parts[i].life>40 && !(rand()%15))
+					if ((TYP(r)==PT_SPRK || (parts[i].temp>=(273.15+400.0f))) && parts[i].life>40 && !(rand()%15))
 					{
 						parts[i].life = 39;						
 					}

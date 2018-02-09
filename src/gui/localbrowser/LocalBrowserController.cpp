@@ -64,7 +64,7 @@ void LocalBrowserController::removeSelectedC()
 		RemoveSavesTask(LocalBrowserController * c, std::vector<std::string> saves_) : c(c) { saves = saves_; }
 		virtual bool doWork()
 		{
-			for(int i = 0; i < saves.size(); i++)
+			for (size_t i = 0; i < saves.size(); i++)
 			{
 				std::stringstream saveName;
 				saveName << "Deleting stamp [" << saves[i] << "] ...";
@@ -76,6 +76,7 @@ void LocalBrowserController::removeSelectedC()
 		}
 		virtual void after()
 		{
+			Client::Ref().updateStamps();
 			c->RefreshSavesList();
 		}
 	};
@@ -131,6 +132,12 @@ void LocalBrowserController::PrevPage()
 		browserModel->UpdateSavesList(browserModel->GetPageNum()-1);
 }
 
+void LocalBrowserController::SetPage(int page)
+{
+	if (page != browserModel->GetPageNum() && page > 0 && page <= browserModel->GetPageCount())
+		browserModel->UpdateSavesList(page);
+}
+
 void LocalBrowserController::Update()
 {
 	if(browserModel->GetSave())
@@ -159,18 +166,16 @@ void LocalBrowserController::SetMoveToFront(bool move)
 
 void LocalBrowserController::Exit()
 {
-	if(ui::Engine::Ref().GetWindow() == browserView)
-		ui::Engine::Ref().CloseWindow();
+	browserView->CloseActiveWindow();
 	if(callback)
 		callback->ControllerExit();
 	HasDone = true;
 }
 
-LocalBrowserController::~LocalBrowserController() {
-	if(ui::Engine::Ref().GetWindow() == browserView)
-		ui::Engine::Ref().CloseWindow();
-	if(callback)
-		delete callback;
+LocalBrowserController::~LocalBrowserController()
+{
+	browserView->CloseActiveWindow();
+	delete callback;
 	delete browserModel;
 	delete browserView;
 }

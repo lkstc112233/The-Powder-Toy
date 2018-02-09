@@ -1,15 +1,17 @@
 #include <iostream>
+#include "graphics/Graphics.h"
 #include "gui/Style.h"
 #include "Button.h"
 #include "DropDown.h"
+#include "gui/interface/Window.h"
 
 namespace ui {
 
 class ItemSelectedAction;
 class DropDownWindow: public ui::Window {
 	friend class ItemSelectedAction;
-	Appearance appearance;
 	DropDown * dropDown;
+	Appearance appearance;
 	std::vector<Button> buttons;
 	bool isMouseInside;
 public:
@@ -21,7 +23,7 @@ public:
 		ItemSelectedAction(DropDownWindow * window, std::string option): window(window), option(option) { }
 		virtual void ActionCallback(ui::Button *sender)
 		{
-			ui::Engine::Ref().CloseWindow();
+			window->CloseActiveWindow();
 			window->setOption(option);
 			window->SelfDestruct();
 		}
@@ -32,11 +34,11 @@ public:
 		appearance(dropDown->Appearance)
 	{
 		int currentY = 1;
-		for(int i = 0; i < dropDown->options.size(); i++)
+		for (size_t i = 0; i < dropDown->options.size(); i++)
 		{
 			Button * tempButton = new Button(Point(1, currentY), Point(Size.X-2, 16), dropDown->options[i].first);
 			tempButton->Appearance = appearance;
-			if(i)
+			if (i)
 				tempButton->Appearance.Border = ui::Border(0, 1, 1, 1);
 			tempButton->SetActionCallback(new ItemSelectedAction(this, dropDown->options[i].first));
 			AddComponent(tempButton);
@@ -45,16 +47,16 @@ public:
 	}
 	virtual void OnDraw()
 	{
-		Graphics * g = ui::Engine::Ref().g;
+		Graphics * g = GetGraphics();
 		g->clearrect(Position.X, Position.Y, Size.X, Size.Y);
 	}
 	void setOption(std::string option)
 	{
 		dropDown->SetOption(option);
-		if(dropDown->callback)
+		if (dropDown->callback)
 		{
-			int optionIndex = 0;
-			for(optionIndex = 0; optionIndex < dropDown->options.size(); optionIndex++)
+			size_t optionIndex = 0;
+			for (optionIndex = 0; optionIndex < dropDown->options.size(); optionIndex++)
 			{
 				if(option == dropDown->options[optionIndex].first)
 					break;
@@ -64,7 +66,7 @@ public:
 	}
 	virtual void OnTryExit(ExitMethod method)
 	{
-		ui::Engine::Ref().CloseWindow();
+		CloseActiveWindow();
 		SelfDestruct();
 	}
 	virtual ~DropDownWindow() {}
@@ -81,7 +83,7 @@ DropDown::DropDown(Point position, Point size):
 void DropDown::OnMouseClick(int x, int y, unsigned int button)
 {
 	DropDownWindow * newWindow = new DropDownWindow(this);
-	ui::Engine::Ref().ShowWindow(newWindow);
+	newWindow->MakeActiveWindow();
 }
 
 void DropDown::Draw(const Point& screenPos)
@@ -92,7 +94,7 @@ void DropDown::Draw(const Point& screenPos)
 			TextPosition(options[optionIndex].first);
 		drawn = true;
 	}
-	Graphics * g = ui::Engine::Ref().g;
+	Graphics * g = GetGraphics();
 	Point Position = screenPos;
 
 	ui::Colour textColour = Appearance.TextInactive;
@@ -138,9 +140,9 @@ void DropDown::OnMouseLeave(int x, int y)
 	
 	void DropDown::SetOption(std::string option)
 	{
-		for(int i = 0; i < options.size(); i++)
+		for (size_t i = 0; i < options.size(); i++)
 		{
-			if(options[i].first == option)
+			if (options[i].first == option)
 			{
 				optionIndex = i;
 				TextPosition(options[optionIndex].first);
@@ -150,9 +152,9 @@ void DropDown::OnMouseLeave(int x, int y)
 	}
 	void DropDown::SetOption(int option)
 	{
-		for(int i = 0; i < options.size(); i++)
+		for (size_t i = 0; i < options.size(); i++)
 		{
-			if(options[i].second == option)
+			if (options[i].second == option)
 			{
 				optionIndex = i;
 				TextPosition(options[optionIndex].first);
@@ -162,9 +164,9 @@ void DropDown::OnMouseLeave(int x, int y)
 	}
 	void DropDown::AddOption(std::pair<std::string, int> option)
 	{
-		for(int i = 0; i < options.size(); i++)
+		for (size_t i = 0; i < options.size(); i++)
 		{
-			if(options[i] == option)
+			if (options[i] == option)
 				return;
 		}
 		options.push_back(option);
@@ -172,11 +174,11 @@ void DropDown::OnMouseLeave(int x, int y)
 	void DropDown::RemoveOption(std::string option)
 	{
 	start:
-		for(int i = 0; i < options.size(); i++)
+		for (size_t i = 0; i < options.size(); i++)
 		{
-			if(options[i].first == option)
+			if (options[i].first == option)
 			{
-				if(i == optionIndex)
+				if ((int)i == optionIndex)
 					optionIndex = -1;
 				options.erase(options.begin()+i);
 				goto start;
@@ -190,8 +192,7 @@ void DropDown::OnMouseLeave(int x, int y)
 
 
 DropDown::~DropDown() {
-	if(callback)
-		delete callback;
+	delete callback;
 }
 
 } /* namespace ui */

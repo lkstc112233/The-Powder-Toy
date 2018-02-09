@@ -1,20 +1,23 @@
-#include <stdio.h>
+#include <cstdio>
 #ifdef WIN
-	#include <direct.h>
-	#define getcwd _getcwd
+#include <direct.h>
+#define getcwd _getcwd
 #else
-	#include <unistd.h>
+#include <unistd.h>
 #endif
+#include "SDLCompat.h"
 
 #include "OptionsView.h"
+#include "Format.h"
 #include "gui/Style.h"
 #include "gui/interface/Button.h"
 #include "gui/interface/Label.h"
 #include "gui/interface/DropDown.h"
+#include "gui/interface/Engine.h"
 #include "gui/dialogues/ErrorMessage.h"
 
 OptionsView::OptionsView():
-	ui::Window(ui::Point(-1, -1), ui::Point(300, 330)){
+	ui::Window(ui::Point(-1, -1), ui::Point(300, 348)){
 
 	ui::Label * tempLabel = new ui::Label(ui::Point(4, 5), ui::Point(Size.X-8, 14), "Simulation Options");
 	tempLabel->SetTextColour(style::Colour::InformationTitle);
@@ -96,19 +99,19 @@ OptionsView::OptionsView():
 	airMode->AddOption(std::pair<std::string, int>("Off", 3));
 	airMode->AddOption(std::pair<std::string, int>("No Update", 4));
 	airMode->SetActionCallback(new AirModeChanged(this));
-		
+
 	tempLabel = new ui::Label(ui::Point(8, 146), ui::Point(Size.X-96, 16), "Air Simulation Mode");
 	tempLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;	tempLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	AddComponent(tempLabel);
-		
+
 	class GravityModeChanged: public ui::DropDownAction
 	{
 		OptionsView * v;
 	public:
 		GravityModeChanged(OptionsView * v): v(v) { }
 		virtual void OptionChanged(ui::DropDown * sender, std::pair<std::string, int> option) { v->c->SetGravityMode(option.second); }
-	};	
-		
+	};
+
 	gravityMode = new ui::DropDown(ui::Point(Size.X-88, 166), ui::Point(80, 16));
 	AddComponent(gravityMode);
 	gravityMode->AddOption(std::pair<std::string, int>("Vertical", 0));
@@ -126,32 +129,48 @@ OptionsView::OptionsView():
 	public:
 		EdgeModeChanged(OptionsView * v): v(v) { }
 		virtual void OptionChanged(ui::DropDown * sender, std::pair<std::string, int> option) { v->c->SetEdgeMode(option.second); }
-	};	
+	};
 
 	edgeMode = new ui::DropDown(ui::Point(Size.X-88, 186), ui::Point(80, 16));
 	AddComponent(edgeMode);
 	edgeMode->AddOption(std::pair<std::string, int>("Void", 0));
 	edgeMode->AddOption(std::pair<std::string, int>("Solid", 1));
+	edgeMode->AddOption(std::pair<std::string, int>("Loop", 2));
 	edgeMode->SetActionCallback(new EdgeModeChanged(this));
 
 	tempLabel = new ui::Label(ui::Point(8, 186), ui::Point(Size.X-96, 16), "Edge Mode");
 	tempLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;	tempLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	AddComponent(tempLabel);
 
-	class ScaleAction: public ui::CheckboxAction
+	class ScaleAction: public ui::DropDownAction
 	{
 		OptionsView * v;
 	public:
-		ScaleAction(OptionsView * v_){	v = v_;	}
-		virtual void ActionCallback(ui::Checkbox * sender){	v->c->SetScale(sender->GetChecked()); }
+		ScaleAction(OptionsView * v): v(v) { }
+		virtual void OptionChanged(ui::DropDown * sender, std::pair<std::string, int> option) { v->c->SetScale(option.second); }
 	};
-
-	scale = new ui::Checkbox(ui::Point(8, 210), ui::Point(Size.X-6, 16), "Large screen", "");
+	scale = new ui::DropDown(ui::Point(8, 210), ui::Point(40, 16));
+	{
+		int current_scale = ui::Engine::Ref().GetScale();
+		int ix_scale = 1;
+		bool current_scale_valid = false;
+		do
+		{
+			if (current_scale == ix_scale)
+				current_scale_valid = true;
+			scale->AddOption(std::pair<std::string, int>(format::NumberToString<int>(ix_scale), ix_scale));
+			ix_scale += 1;
+		}
+		while (ui::Engine::Ref().GetMaxWidth() >= ui::Engine::Ref().GetWidth() * ix_scale && ui::Engine::Ref().GetMaxHeight() >= ui::Engine::Ref().GetHeight() * ix_scale);
+		if (!current_scale_valid)
+			scale->AddOption(std::pair<std::string, int>("current", current_scale));
+	}
 	scale->SetActionCallback(new ScaleAction(this));
-	tempLabel = new ui::Label(ui::Point(scale->Position.X+Graphics::textwidth(scale->GetText().c_str())+20, scale->Position.Y), ui::Point(Size.X-28, 16), "\bg- Double window size for smaller screens");
+	AddComponent(scale);
+
+	tempLabel = new ui::Label(ui::Point(scale->Position.X+scale->Size.X+3, scale->Position.Y), ui::Point(Size.X-28, 16), "\bg- Window scale factor for larger screens");
 	tempLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;	tempLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	AddComponent(tempLabel);
-	AddComponent(scale);
 
 
 	class FullscreenAction: public ui::CheckboxAction
@@ -161,10 +180,12 @@ OptionsView::OptionsView():
 		FullscreenAction(OptionsView * v_){	v = v_;	}
 		virtual void ActionCallback(ui::Checkbox * sender)
 		{
-#ifdef MACOSX
-			ErrorMessage::Blocking("Error", "fullscreen doesn't work on OS X");
+#ifdef USE_SDL
+#if defined(MACOSX) && !SDL_VERSION_ATLEAST(1, 2, 15)
+			ErrorMessage::Blocking("Information", "Fullscreen doesn't work on OS X");
 #else
 			v->c->SetFullscreen(sender->GetChecked());
+#endif
 #endif
 		}
 	};
@@ -207,6 +228,22 @@ OptionsView::OptionsView():
 	AddComponent(tempLabel);
 	AddComponent(showAvatars);
 
+	class DepthAction: public ui::TextboxAction
+	{
+		OptionsView * v;
+	public:
+		DepthAction(OptionsView * v_) { v = v_; }
+		virtual void TextChangedCallback(ui::Textbox * sender) { v->c->Set3dDepth(format::StringToNumber<int>(sender->GetText())); }
+	};
+	depthTextbox = new ui::Textbox(ui::Point(8, Size.Y-58), ui::Point(25, 16), format::NumberToString<int>(ui::Engine::Ref().Get3dDepth()));
+	depthTextbox->SetInputType(ui::Textbox::Numeric);
+	depthTextbox->SetActionCallback(new DepthAction(this));
+	AddComponent(depthTextbox);
+
+	tempLabel = new ui::Label(ui::Point(depthTextbox->Position.X+depthTextbox->Size.X+3, depthTextbox->Position.Y), ui::Point(Size.X-28, 16), "\bg- Change the depth of the 3D anaglyph effect");
+	tempLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;	tempLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
+	AddComponent(tempLabel);
+
 	class DataFolderAction: public ui::ButtonAction
 	{
 	public:
@@ -215,7 +252,7 @@ OptionsView::OptionsView():
 		{
 //one of these should always be defined
 #ifdef WIN
-			const char* openCommand = "start ";
+			const char* openCommand = "explorer ";
 #elif MACOSX
 			const char* openCommand = "open ";
 //#elif LIN
@@ -225,7 +262,7 @@ OptionsView::OptionsView():
 			char* workingDirectory = new char[FILENAME_MAX+strlen(openCommand)];
 			sprintf(workingDirectory, "%s\"%s\"", openCommand, getcwd(NULL, 0));
 			system(workingDirectory);
-			delete workingDirectory;
+			delete[] workingDirectory;
 		}
 	};
 	ui::Button * dataFolderButton = new ui::Button(ui::Point(8, Size.Y-38), ui::Point(90, 16), "Open Data Folder");
@@ -263,7 +300,7 @@ void OptionsView::NotifySettingsChanged(OptionsModel * sender)
 	airMode->SetOption(sender->GetAirMode());
 	gravityMode->SetOption(sender->GetGravityMode());
 	edgeMode->SetOption(sender->GetEdgeMode());
-	scale->SetChecked(sender->GetScale());
+	scale->SetOption(sender->GetScale());
 	fullscreen->SetChecked(sender->GetFullscreen());
 	fastquit->SetChecked(sender->GetFastQuit());
 	showAvatars->SetChecked(sender->GetShowAvatars());
@@ -276,7 +313,7 @@ void OptionsView::AttachController(OptionsController * c_)
 
 void OptionsView::OnDraw()
 {
-	Graphics * g = ui::Engine::Ref().g;
+	Graphics * g = GetGraphics();
 	g->clearrect(Position.X-2, Position.Y-2, Size.X+3, Size.Y+3);
 	g->drawrect(Position.X, Position.Y, Size.X, Size.Y, 255, 255, 255, 255);
 	g->draw_line(Position.X+1, Position.Y+scale->Position.Y-4, Position.X+Size.X-1, Position.Y+scale->Position.Y-4, 255, 255, 255, 180);
@@ -290,4 +327,3 @@ void OptionsView::OnTryExit(ExitMethod method)
 
 OptionsView::~OptionsView() {
 }
-

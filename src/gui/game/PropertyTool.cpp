@@ -1,9 +1,9 @@
 #include <iostream>
 #include <sstream>
+#include "Tool.h"
+#include "client/Client.h"
 #include "gui/Style.h"
 #include "gui/game/Brush.h"
-#include "simulation/Simulation.h"
-#include "Tool.h"
 #include "gui/interface/Window.h"
 #include "gui/interface/Button.h"
 #include "gui/interface/Label.h"
@@ -11,6 +11,7 @@
 #include "gui/interface/DropDown.h"
 #include "gui/interface/Keys.h"
 #include "gui/dialogues/ErrorMessage.h"
+#include "simulation/Simulation.h"
 
 class PropertyWindow: public ui::Window
 {
@@ -33,7 +34,7 @@ public:
 		OkayAction(PropertyWindow * prompt_) { prompt = prompt_; }
 		void ActionCallback(ui::Button * sender)
 		{
-			ui::Engine::Ref().CloseWindow();
+			prompt->CloseActiveWindow();
 			if(prompt->textField->GetText().length())
 				prompt->SetProperty();
 			prompt->SelfDestruct();
@@ -48,13 +49,13 @@ tool(tool_),
 sim(sim_)
 {
 	properties = Particle::GetProperties();
-	
+
 	ui::Label * messageLabel = new ui::Label(ui::Point(4, 5), ui::Point(Size.X-8, 14), "Edit property");
 	messageLabel->SetTextColour(style::Colour::InformationTitle);
 	messageLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	messageLabel->Appearance.VerticalAlign = ui::Appearance::AlignTop;
 	AddComponent(messageLabel);
-	
+
 	ui::Button * okayButton = new ui::Button(ui::Point(0, Size.Y-17), ui::Point(Size.X, 17), "OK");
 	okayButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	okayButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
@@ -62,7 +63,7 @@ sim(sim_)
 	okayButton->SetActionCallback(new OkayAction(this));
 	AddComponent(okayButton);
 	SetOkayButton(okayButton);
-	
+
 	class PropertyChanged: public ui::DropDownAction
 	{
 		PropertyWindow * w;
@@ -76,20 +77,20 @@ sim(sim_)
 	property = new ui::DropDown(ui::Point(8, 25), ui::Point(Size.X-16, 17));
 	property->SetActionCallback(new PropertyChanged(this));
 	AddComponent(property);
-	for(int i = 0; i < properties.size(); i++)
+	for (size_t i = 0; i < properties.size(); i++)
 	{
 		property->AddOption(std::pair<std::string, int>(properties[i].Name, i));
 	}
 	property->SetOption(Client::Ref().GetPrefInteger("Prop.Type", 0));
-	
+
 	textField = new ui::Textbox(ui::Point(8, 46), ui::Point(Size.X-16, 16), "", "[value]");
 	textField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	textField->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	textField->SetText(Client::Ref().GetPrefString("Prop.Value", ""));
 	AddComponent(textField);
 	FocusComponent(textField);
-	
-	ui::Engine::Ref().ShowWindow(this);
+
+	MakeActiveWindow();
 }
 
 void PropertyWindow::SetProperty()
@@ -120,29 +121,16 @@ void PropertyWindow::SetProperty()
 						buffer << std::hex << value.substr(1);
 						buffer >> v;
 					}
-					else 
+					else
 					{
-						if(properties[property->GetOption().second].Type == StructProperty::ParticleType)
+						int type;
+						if (properties[property->GetOption().second].Type == StructProperty::ParticleType && (type = sim->GetParticleType(value)) != -1)
 						{
-							int type = sim->GetParticleType(value);
-							if(type != -1)
-							{
+							v = type;
+							
 #ifdef DEBUG
-								std::cout << "Got type from particle name" << std::endl;
+							std::cout << "Got type from particle name" << std::endl;
 #endif
-								v = type;
-							}
-							else
-							{
-								std::stringstream buffer(value);
-								buffer.exceptions(std::stringstream::failbit | std::stringstream::badbit);
-								buffer >> v;
-							}
-							if (property->GetOption().first == "type" && (v < 0 || v >= PT_NUM || !sim->elements[v].Enabled))
-							{
-								new ErrorMessage("Could not set property", "Invalid Particle Type");
-								return;
-							}
 						}
 						else
 						{
@@ -151,9 +139,17 @@ void PropertyWindow::SetProperty()
 							buffer >> v;
 						}
 					}
+						
+					if (properties[property->GetOption().second].Name == "type" && (v < 0 || v >= PT_NUM || !sim->elements[v].Enabled))
+					{
+						new ErrorMessage("Could not set property", "Invalid particle type");
+						return;
+					}
+						
 #ifdef DEBUG
 					std::cout << "Got int value " << v << std::endl;
 #endif
+
 					tool->propValue.Integer = v;
 					break;
 				}
@@ -176,7 +172,7 @@ void PropertyWindow::SetProperty()
 						buffer << std::hex << value.substr(1);
 						buffer >> v;
 					}
-					else 
+					else
 					{
 						std::stringstream buffer(value);
 						buffer.exceptions(std::stringstream::failbit | std::stringstream::badbit);
@@ -193,6 +189,13 @@ void PropertyWindow::SetProperty()
 					std::stringstream buffer(value);
 					buffer.exceptions(std::stringstream::failbit | std::stringstream::badbit);
 					buffer >> tool->propValue.Float;
+					if (properties[property->GetOption().second].Name == "temp" && value.length())
+					{
+						if (value.substr(value.length()-1) == "C")
+							tool->propValue.Float += 273.15;
+						else if (value.substr(value.length()-1) == "F")
+							tool->propValue.Float = (tool->propValue.Float-32.0f)*5/9+273.15f;
+					}
 #ifdef DEBUG
 					std::cout << "Got float value " << tool->propValue.Float << std::endl;
 #endif
@@ -215,23 +218,23 @@ void PropertyWindow::SetProperty()
 
 void PropertyWindow::OnTryExit(ExitMethod method)
 {
-	ui::Engine::Ref().CloseWindow();
+	CloseActiveWindow();
 	SelfDestruct();
 }
 
 void PropertyWindow::OnDraw()
 {
-	Graphics * g = ui::Engine::Ref().g;
-	
+	Graphics * g = GetGraphics();
+
 	g->clearrect(Position.X-2, Position.Y-2, Size.X+3, Size.Y+3);
 	g->drawrect(Position.X, Position.Y, Size.X, Size.Y, 200, 200, 200, 255);
 }
 
 void PropertyWindow::OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt)
 {
-	if (key == KEY_UP)
+	if (key == SDLK_UP)
 		property->SetOption(property->GetOption().second-1);
-	else if (key == KEY_DOWN)
+	else if (key == SDLK_DOWN)
 		property->SetOption(property->GetOption().second+1);
 }
 
@@ -252,14 +255,14 @@ void PropertyTool::SetProperty(Simulation *sim, ui::Point position)
 	switch (propType)
 	{
 		case StructProperty::Float:
-			*((float*)(((char*)&sim->parts[i>>8])+propOffset)) = propValue.Float;
+			*((float*)(((char*)&sim->parts[ID(i)])+propOffset)) = propValue.Float;
 			break;
 		case StructProperty::ParticleType:
 		case StructProperty::Integer:
-			*((int*)(((char*)&sim->parts[i>>8])+propOffset)) = propValue.Integer;
+			*((int*)(((char*)&sim->parts[ID(i)])+propOffset)) = propValue.Integer;
 			break;
 		case StructProperty::UInteger:
-			*((unsigned int*)(((char*)&sim->parts[i>>8])+propOffset)) = propValue.UInteger;
+			*((unsigned int*)(((char*)&sim->parts[ID(i)])+propOffset)) = propValue.UInteger;
 			break;
 		default:
 			break;

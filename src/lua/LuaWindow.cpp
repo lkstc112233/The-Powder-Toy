@@ -61,9 +61,9 @@ LuaWindow::LuaWindow(lua_State * l) :
 	int sizeY = luaL_optinteger(l, 4, 10);
 
 	// We should replace this with errors
-	if (posX < 1)
+	if (posX < 1 && posX != -1)
 		posX = 1;
-	if (posY < 1)
+	if (posY < 1 && posY != -1)
 		posY = 1;
 	if (sizeX < 10)
 		sizeX = 10;
@@ -109,17 +109,17 @@ int LuaWindow::addComponent(lua_State * l)
 {
 	void * luaComponent = NULL;
 	ui::Component * component = NULL;
-	if(luaComponent = Luna<LuaButton>::tryGet(l, 1))
+	if ((luaComponent = Luna<LuaButton>::tryGet(l, 1)))
 		component = Luna<LuaButton>::get(luaComponent)->GetComponent();
-	else if(luaComponent = Luna<LuaLabel>::tryGet(l, 1))
+	else if ((luaComponent = Luna<LuaLabel>::tryGet(l, 1)))
 		component = Luna<LuaLabel>::get(luaComponent)->GetComponent();
-	else if(luaComponent = Luna<LuaTextbox>::tryGet(l, 1))
+	else if ((luaComponent = Luna<LuaTextbox>::tryGet(l, 1)))
 		component = Luna<LuaTextbox>::get(luaComponent)->GetComponent();
-	else if(luaComponent = Luna<LuaCheckbox>::tryGet(l, 1))
+	else if ((luaComponent = Luna<LuaCheckbox>::tryGet(l, 1)))
 		component = Luna<LuaCheckbox>::get(luaComponent)->GetComponent();
-	else if(luaComponent = Luna<LuaSlider>::tryGet(l, 1))
+	else if ((luaComponent = Luna<LuaSlider>::tryGet(l, 1)))
 		component = Luna<LuaSlider>::get(luaComponent)->GetComponent();
-	else if(luaComponent = Luna<LuaProgressBar>::tryGet(l, 1))
+	else if ((luaComponent = Luna<LuaProgressBar>::tryGet(l, 1)))
 		component = Luna<LuaProgressBar>::get(luaComponent)->GetComponent();
 	else
 		luaL_typerror(l, 1, "Component");
@@ -132,17 +132,17 @@ int LuaWindow::removeComponent(lua_State * l)
 {
 	void * luaComponent = NULL;
 	ui::Component * component = NULL;
-	if(luaComponent = Luna<LuaButton>::tryGet(l, 1))
+	if ((luaComponent = Luna<LuaButton>::tryGet(l, 1)))
 		component = Luna<LuaButton>::get(luaComponent)->GetComponent();
-	else if(luaComponent = Luna<LuaLabel>::tryGet(l, 1))
+	else if ((luaComponent = Luna<LuaLabel>::tryGet(l, 1)))
 		component = Luna<LuaLabel>::get(luaComponent)->GetComponent();
-	else if(luaComponent = Luna<LuaTextbox>::tryGet(l, 1))
+	else if ((luaComponent = Luna<LuaTextbox>::tryGet(l, 1)))
 		component = Luna<LuaTextbox>::get(luaComponent)->GetComponent();
-	else if(luaComponent = Luna<LuaCheckbox>::tryGet(l, 1))
+	else if ((luaComponent = Luna<LuaCheckbox>::tryGet(l, 1)))
 		component = Luna<LuaCheckbox>::get(luaComponent)->GetComponent();
-	else if(luaComponent = Luna<LuaSlider>::tryGet(l, 1))
+	else if ((luaComponent = Luna<LuaSlider>::tryGet(l, 1)))
 		component = Luna<LuaSlider>::get(luaComponent)->GetComponent();
-	else if(luaComponent = Luna<LuaProgressBar>::tryGet(l, 1))
+	else if ((luaComponent = Luna<LuaProgressBar>::tryGet(l, 1)))
 		component = Luna<LuaProgressBar>::get(luaComponent)->GetComponent();
 	else
 		luaL_typerror(l, 1, "Component");
@@ -606,8 +606,7 @@ int LuaWindow::onKeyRelease(lua_State * l)
 
 LuaWindow::~LuaWindow()
 {
-	if(ui::Engine::Ref().GetWindow() == window)
-		ui::Engine::Ref().CloseWindow();
+	window->CloseActiveWindow();
 	delete window;
 }
 #endif

@@ -5,6 +5,7 @@
 #include "OptionsController.h"
 #include "gui/interface/Checkbox.h"
 #include "gui/interface/DropDown.h"
+#include "gui/interface/Textbox.h"
 #include "OptionsModel.h"
 
 class OptionsModel;
@@ -18,10 +19,11 @@ class OptionsView: public ui::Window {
 	ui::DropDown * airMode;
 	ui::DropDown * gravityMode;
 	ui::DropDown * edgeMode;
-	ui::Checkbox * scale;
+	ui::DropDown * scale;
 	ui::Checkbox * fullscreen;
 	ui::Checkbox * fastquit;
 	ui::Checkbox * showAvatars;
+	ui::Textbox  * depthTextbox;
 public:
 	OptionsView();
 	void NotifySettingsChanged(OptionsModel * sender);

@@ -19,7 +19,7 @@ Element_GRVT::Element_GRVT()
 	HotAir = 0.000f * CFDS;
 	Falldown = 0;
 
-	Flammable = 40;
+	Flammable = 0;
 	Explosive = 0;
 	Meltable = 0;
 	Hardness = 1;
@@ -30,7 +30,6 @@ Element_GRVT::Element_GRVT()
 	HeatConduct = 61;
 	Description = "Gravitons. Create Newtonian Gravity.";
 
-	State = ST_GAS;
 	Properties = TYPE_ENERGY|PROP_LIFE_DEC|PROP_LIFE_KILL_DEC;
 
 	LowPressure = IPL;

@@ -4,7 +4,6 @@
 #include <string>
 
 #include "Component.h"
-#include "PowderToy.h"
 #include "Colour.h"
 
 namespace ui
@@ -19,7 +18,6 @@ namespace ui
 
 		std::string text;
 		Colour textColour;
-		int caret;
 		int selectionIndex0;
 		int selectionIndex1;
 
@@ -55,6 +53,7 @@ namespace ui
 
 		virtual bool HasSelection();
 		virtual void ClearSelection();
+		virtual void selectAll();
 		virtual void AutoHeight();
 
 		void SetTextColour(Colour textColour) { this->textColour = textColour; }

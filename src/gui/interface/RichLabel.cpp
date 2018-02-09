@@ -2,7 +2,7 @@
 #include <exception>
 
 #include "RichLabel.h"
-#include "Misc.h"
+#include "Platform.h"
 #include "gui/interface/Point.h"
 #include "gui/interface/Component.h"
 #include "graphics/Graphics.h"
@@ -175,7 +175,7 @@ std::string RichLabel::GetText()
 
 void RichLabel::Draw(const Point& screenPos)
 {
-	Graphics * g = ui::Engine::Ref().g;
+	Graphics * g = GetGraphics();
 	ui::Colour textColour = Appearance.TextInactive;
 	g->drawtext(screenPos.X+textPosition.X, screenPos.Y+textPosition.Y, displayText, textColour.Red, textColour.Green, textColour.Blue, 255);
 }
@@ -190,7 +190,7 @@ void RichLabel::OnMouseClick(int x, int y, unsigned button)
 			switch((*iter).action)
 			{
 				case 'a':
-					OpenURI((*iter).actionData);
+					Platform::OpenURI((*iter).actionData);
 				break;
 			}
 		}

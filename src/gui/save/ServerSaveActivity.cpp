@@ -1,4 +1,5 @@
 #include "ServerSaveActivity.h"
+#include "graphics/Graphics.h"
 #include "gui/interface/Label.h"
 #include "gui/interface/Textbox.h"
 #include "gui/interface/Button.h"
@@ -58,6 +59,16 @@ public:
 	}
 };
 
+class ServerSaveActivity::NameChangedAction: public ui::TextboxAction
+{
+public:
+	ServerSaveActivity * a;
+	NameChangedAction(ServerSaveActivity * a) : a(a) {}
+	virtual void TextChangedCallback(ui::Textbox * sender) {
+		a->CheckName(sender->GetText());
+	}
+};
+
 class SaveUploadTask: public Task
 {
 	SaveInfo save;
@@ -98,11 +109,12 @@ ServerSaveActivity::ServerSaveActivity(SaveInfo save, ServerSaveActivity::SaveUp
 	callback(callback),
 	saveUploadTask(NULL)
 {
-	ui::Label * titleLabel = new ui::Label(ui::Point(4, 5), ui::Point((Size.X/2)-8, 16), "Save to server:");
+	titleLabel = new ui::Label(ui::Point(4, 5), ui::Point((Size.X/2)-8, 16), "");
 	titleLabel->SetTextColour(style::Colour::InformationTitle);
 	titleLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	titleLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	AddComponent(titleLabel);
+	CheckName(save.GetName()); //set titleLabel text
 
 	ui::Label * previewLabel = new ui::Label(ui::Point((Size.X/2)+4, 5), ui::Point((Size.X/2)-8, 16), "Preview:");
 	previewLabel->SetTextColour(style::Colour::InformationTitle);
@@ -113,6 +125,7 @@ ServerSaveActivity::ServerSaveActivity(SaveInfo save, ServerSaveActivity::SaveUp
 	nameField = new ui::Textbox(ui::Point(8, 25), ui::Point((Size.X/2)-16, 16), save.GetName(), "[save name]");
 	nameField->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	nameField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+	nameField->SetActionCallback(new NameChangedAction(this));
 	AddComponent(nameField);
 	FocusComponent(nameField);
 
@@ -187,7 +200,9 @@ ServerSaveActivity::ServerSaveActivity(SaveInfo save, bool saveNow, ServerSaveAc
 	titleLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	AddComponent(titleLabel);
 
-	saveUploadTask = new SaveUploadTask(save);
+	AddAuthorInfo();
+
+	saveUploadTask = new SaveUploadTask(this->save);
 	saveUploadTask->AddTaskListener(this);
 	saveUploadTask->Start();
 }
@@ -243,6 +258,20 @@ void ServerSaveActivity::Save()
 	}
 }
 
+void ServerSaveActivity::AddAuthorInfo()
+{
+	Json::Value serverSaveInfo;
+	serverSaveInfo["type"] = "save";
+	serverSaveInfo["id"] = save.GetID();
+	serverSaveInfo["username"] = Client::Ref().GetAuthUser().Username;
+	serverSaveInfo["title"] = save.GetName();
+	serverSaveInfo["description"] = save.GetDescription();
+	serverSaveInfo["published"] = (int)save.GetPublished();
+	serverSaveInfo["date"] = (Json::Value::UInt64)time(NULL);
+	Client::Ref().SaveAuthorInfo(&serverSaveInfo);
+	save.GetGameSave()->authors = serverSaveInfo;
+}
+
 void ServerSaveActivity::saveUpload()
 {
 	save.SetName(nameField->GetText());
@@ -251,6 +280,7 @@ void ServerSaveActivity::saveUpload()
 	save.SetUserName(Client::Ref().GetAuthUser().Username);
 	save.SetID(0);
 	save.GetGameSave()->paused = pausedCheckbox->GetChecked();
+	AddAuthorInfo();
 
 	if(Client::Ref().UploadSave(save) != RequestOkay)
 	{
@@ -276,8 +306,8 @@ void ServerSaveActivity::ShowPublishingInfo()
 		"\btPublished saves\bw will appear on the 'By Date' feed and will be seen by many people. These saves also contribute to your Average Score, which is displayed publicly on your profile page on the website. Publish saves that you want people to see so they can comment and vote on.\n"
 		"\btUnpublished saves\bw will not be shown on the 'By Date' feed. These will not contribute to your Average Score. They are not completely private though, as anyone who knows the save id will be able to view it. You can give the save id out to show specific people the save but not allow just everyone to see it.\n"
 		"\n"
-		"To quickly resave a save, open it and click the left side of the split resave button to \bt'save as current name'\bw. If you want to change the description or change the published status, you can click the right side to \bt'save as new name'\bw. Note that you can't change the name of saves; this will create an entirely new save with no comments, votes, or tags; separate from the original.\n"
-		"You may want to publish an unpublished save after it is finished, or to unpublish some currently published ones. You can do this by opening the save, selecting the 'save game as new name' button, and changing the published status there. You can also \btunpublish or delete saves\bw by selecting them in the 'my own' section of the browser and clicking either one of the buttons that appear on bottom.\n"
+		"To quickly resave a save, open it and click the left side of the split resave button to \bt'Reupload the current simulation'\bw. If you want to change the description or change the published status, you can click the right side to \bt'Modify simulation properties'\bw. Note that you can't change the name of saves; this will create an entirely new save with no comments, votes, or tags; separate from the original.\n"
+		"You may want to publish an unpublished save after it is finished, or to unpublish some currently published ones. You can do this by opening the save, selecting the 'Modify simulation properties' button, and changing the published status there. You can also \btunpublish or delete saves\bw by selecting them in the 'my own' section of the browser and clicking either one of the buttons that appear on bottom.\n"
 		"If a save is under a week old and gains popularity fast, it will be automatically placed on the \btfront page\bw. Only published saves will be able to get here. Moderators can also choose to promote any save onto the front page, but this happens rarely. They can also demote any save from the front page that breaks a rule or they feel doesn't belong.\n"
 		"Once you make a save, you can resave it as many times as you want. A short previous \btsave history\bw is saved, just right click any save in the save browser and select 'View History' to view it. This is useful for when you accidentally save something you didn't mean to and want to go back to the old version.\n"
 		;
@@ -313,6 +343,14 @@ void ServerSaveActivity::ShowRules()
 	new InformationMessage("Save Uploading Rules", rules, true);
 }
 
+void ServerSaveActivity::CheckName(std::string newname)
+{
+	if (newname.length() && newname == save.GetName() && save.GetUserName() == Client::Ref().GetAuthUser().Username)
+		titleLabel->SetText("Modify simulation properties:");
+	else
+		titleLabel->SetText("Upload new simulation:");
+}
+
 void ServerSaveActivity::OnTick(float dt)
 {
 	if(saveUploadTask)
@@ -321,8 +359,8 @@ void ServerSaveActivity::OnTick(float dt)
 
 void ServerSaveActivity::OnDraw()
 {
-	Graphics * g = ui::Engine::Ref().g;
-	g->draw_rgba_image((unsigned char*)save_to_server_image, -10, 0, 0.7f);
+	Graphics * g = GetGraphics();
+	g->draw_rgba_image(save_to_server_image, -10, 0, 0.7f);
 	g->clearrect(Position.X-2, Position.Y-2, Size.X+3, Size.Y+3);
 	g->drawrect(Position.X, Position.Y, Size.X, Size.Y, 255, 255, 255, 255);
 
@@ -338,18 +376,14 @@ void ServerSaveActivity::OnDraw()
 
 void ServerSaveActivity::OnResponseReady(void * imagePtr, int identifier)
 {
-	if(thumbnail)
-		delete thumbnail;
+	delete thumbnail;
 	thumbnail = (VideoBuffer *)imagePtr;
 }
 
 ServerSaveActivity::~ServerSaveActivity()
 {
 	RequestBroker::Ref().DetachRequestListener(this);
-	if(saveUploadTask)
-		delete saveUploadTask;
-	if(callback)
-		delete callback;
-	if(thumbnail)
-		delete thumbnail;
+	delete saveUploadTask;
+	delete callback;
+	delete thumbnail;
 }

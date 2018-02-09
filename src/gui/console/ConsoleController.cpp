@@ -28,8 +28,7 @@ void ConsoleController::EvaluateCommand(std::string command)
 
 void ConsoleController::CloseConsole()
 {
-	if(ui::Engine::Ref().GetWindow() == consoleView)
-		ui::Engine::Ref().CloseWindow();
+	consoleView->CloseActiveWindow();
 }
 
 std::string ConsoleController::FormatCommand(std::string command)
@@ -39,23 +38,22 @@ std::string ConsoleController::FormatCommand(std::string command)
 
 void ConsoleController::NextCommand()
 {
-	int cIndex = consoleModel->GetCurrentCommandIndex();
-	if(cIndex < consoleModel->GetPreviousCommands().size())
+	size_t cIndex = consoleModel->GetCurrentCommandIndex();
+	if (cIndex < consoleModel->GetPreviousCommands().size())
 		consoleModel->SetCurrentCommandIndex(cIndex+1);
 }
 
 void ConsoleController::PreviousCommand()
 {
-	int cIndex = consoleModel->GetCurrentCommandIndex();
+	size_t cIndex = consoleModel->GetCurrentCommandIndex();
 	if(cIndex > 0)
 		consoleModel->SetCurrentCommandIndex(cIndex-1);
 }
 
 void ConsoleController::Exit()
 {
-	if(ui::Engine::Ref().GetWindow() == consoleView)
-		ui::Engine::Ref().CloseWindow();
-	if(callback)
+	consoleView->CloseActiveWindow();
+	if (callback)
 		callback->ControllerExit();
 	HasDone = true;
 }
@@ -65,11 +63,10 @@ ConsoleView * ConsoleController::GetView()
 	return consoleView;
 }
 
-ConsoleController::~ConsoleController() {
-	if(ui::Engine::Ref().GetWindow() == consoleView)
-		ui::Engine::Ref().CloseWindow();
-	if(callback)
-		delete callback;
+ConsoleController::~ConsoleController()
+{
+	consoleView->CloseActiveWindow();
+	delete callback;
 	delete consoleModel;
 	delete consoleView;
 }

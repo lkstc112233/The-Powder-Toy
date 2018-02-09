@@ -3,21 +3,21 @@
 
 #include "AvatarButton.h"
 #include "Format.h"
-#include "Engine.h"
 #include "client/Client.h"
 #include "client/requestbroker/RequestBroker.h"
 #include "graphics/Graphics.h"
 #include "ContextMenu.h"
 #include "Keys.h"
+#include "Mouse.h"
 
 namespace ui {
 
 AvatarButton::AvatarButton(Point position, Point size, std::string username):
 	Component(position, size),
-	name(username),
-	actionCallback(NULL),
 	avatar(NULL),
-	tried(false)
+	name(username),
+	tried(false),
+	actionCallback(NULL)
 {
 
 }
@@ -25,10 +25,8 @@ AvatarButton::AvatarButton(Point position, Point size, std::string username):
 AvatarButton::~AvatarButton()
 {
 	RequestBroker::Ref().DetachRequestListener(this);
-	if(avatar)
-		delete avatar;
-	if(actionCallback)
-		delete actionCallback;
+	delete avatar;
+	delete actionCallback;
 }
 
 void AvatarButton::Tick(float dt)
@@ -45,15 +43,14 @@ void AvatarButton::OnResponseReady(void * imagePtr, int identifier)
 	VideoBuffer * image = (VideoBuffer*)imagePtr;
 	if(image)
 	{
-		if(avatar)
-			delete avatar;
+		delete avatar;
 		avatar = image;
 	}
 }
 
 void AvatarButton::Draw(const Point& screenPos)
 {
-	Graphics * g = ui::Engine::Ref().g;
+	Graphics * g = GetGraphics();
 
 	if(avatar)
 	{
@@ -82,7 +79,7 @@ void AvatarButton::OnContextMenuAction(int item)
 
 void AvatarButton::OnMouseClick(int x, int y, unsigned int button)
 {
-	if(button == BUTTON_RIGHT)
+	if(button == SDL_BUTTON_RIGHT)
 	{
 		if(menu)
 			menu->Show(GetScreenPos() + ui::Point(x, y));

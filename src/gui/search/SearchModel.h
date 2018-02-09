@@ -3,8 +3,8 @@
 
 #include <vector>
 #include <string>
-#include <pthread.h>
-#undef GetUserName //God dammit microsoft!
+#include "common/tpt-minmax.h"
+#include "common/tpt-thread.h"
 #include <cmath>
 #include "client/SaveInfo.h"
 #include "SearchView.h"
@@ -57,16 +57,16 @@ public:
     void SetShowTags(bool show);
     bool GetShowTags();
 	void AddObserver(SearchView * observer);
-	void UpdateSaveList(int pageNumber, std::string query);
+	bool UpdateSaveList(int pageNumber, std::string query);
 	vector<SaveInfo*> GetSaveList();
 	vector<pair<string, int> > GetTagList();
 	string GetLastError() { return lastError; }
 	int GetPageCount()
 	{
 		if (!showOwn && !showFavourite && currentSort == "best" && lastQuery == "")
-			return max(1, (int)(ceil((resultCount+5)/20.0f)));
+			return std::max(1, (int)(ceil(resultCount/20.0f))+1); //add one for front page (front page saves are repeated twice)
 		else
-			return max(1, (int)(ceil(resultCount/20.0f)));
+			return std::max(1, (int)(ceil(resultCount/20.0f)));
 	}
 	int GetPageNum() { return currentPage; }
 	std::string GetLastQuery() { return lastQuery; }

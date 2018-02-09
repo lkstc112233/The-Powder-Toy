@@ -23,6 +23,7 @@ Element::Element():
 	Explosive(0),
 	Meltable(0),
 	Hardness(30),
+	PhotonReflectWavelengths(0x3FFFFFFF),
 
 	Weight(50),
 
@@ -30,7 +31,6 @@ Element::Element():
 	HeatConduct(128),
 	Description("No description"),
 
-	State(ST_SOLID),
 	Properties(TYPE_SOLID),
 
 	LowPressure(IPL),
@@ -69,11 +69,12 @@ std::vector<StructProperty> Element::GetProperties()
 	properties.push_back(StructProperty("Explosive",					StructProperty::Integer,	offsetof(Element, Explosive)));
 	properties.push_back(StructProperty("Meltable",						StructProperty::Integer,	offsetof(Element, Meltable)));
 	properties.push_back(StructProperty("Hardness",						StructProperty::Integer,	offsetof(Element, Hardness)));
+	properties.push_back(StructProperty("PhotonReflectWavelengths",		StructProperty::UInteger,	offsetof(Element, PhotonReflectWavelengths)));
 	properties.push_back(StructProperty("Weight",						StructProperty::Integer,	offsetof(Element, Weight)));
 	properties.push_back(StructProperty("Temperature",					StructProperty::Float,		offsetof(Element, Temperature)));
 	properties.push_back(StructProperty("HeatConduct",					StructProperty::UChar,		offsetof(Element, HeatConduct)));
 	properties.push_back(StructProperty("Description",					StructProperty::String,		offsetof(Element, Description)));
-	properties.push_back(StructProperty("State",						StructProperty::Char,		offsetof(Element, State)));
+	properties.push_back(StructProperty("State",						StructProperty::Removed,	0));
 	properties.push_back(StructProperty("Properties",					StructProperty::Integer,	offsetof(Element, Properties)));
 	properties.push_back(StructProperty("LowPressure",					StructProperty::Float,		offsetof(Element, LowPressure)));
 	properties.push_back(StructProperty("LowPressureTransition",		StructProperty::Integer,	offsetof(Element, LowPressureTransition)));
@@ -87,7 +88,7 @@ std::vector<StructProperty> Element::GetProperties()
 }
 
 int Element::legacyUpdate(UPDATE_FUNC_ARGS) {
-	int r, rx, ry, rt;
+	int r, rx, ry;
 	int t = parts[i].type;
 	if (t==PT_WTRV) {
 		for (rx=-2; rx<3; rx++)
@@ -98,16 +99,16 @@ int Element::legacyUpdate(UPDATE_FUNC_ARGS) {
 					r = pmap[y+ry][x+rx];
 					if (!r)
 						continue;
-					if (((r&0xFF)==PT_WATR||(r&0xFF)==PT_DSTW||(r&0xFF)==PT_SLTW) && 1>(rand()%1000))
+					if ((TYP(r)==PT_WATR||TYP(r)==PT_DSTW||TYP(r)==PT_SLTW) && 1>(rand()%1000))
 					{
 						sim->part_change_type(i,x,y,PT_WATR);
-						sim->part_change_type(r>>8,x+rx,y+ry,PT_WATR);
+						sim->part_change_type(ID(r),x+rx,y+ry,PT_WATR);
 					}
-					if (((r&0xFF)==PT_ICEI || (r&0xFF)==PT_SNOW) && 1>(rand()%1000))
+					if ((TYP(r)==PT_ICEI || TYP(r)==PT_SNOW) && 1>(rand()%1000))
 					{
 						sim->part_change_type(i,x,y,PT_WATR);
 						if (1>(rand()%1000))
-							sim->part_change_type(r>>8,x+rx,y+ry,PT_WATR);
+							sim->part_change_type(ID(r),x+rx,y+ry,PT_WATR);
 					}
 				}
 	}
@@ -120,7 +121,7 @@ int Element::legacyUpdate(UPDATE_FUNC_ARGS) {
 					r = pmap[y+ry][x+rx];
 					if (!r)
 						continue;
-					if (((r&0xFF)==PT_FIRE || (r&0xFF)==PT_LAVA) && 1>(rand()%10))
+					if ((TYP(r)==PT_FIRE || TYP(r)==PT_LAVA) && 1>(rand()%10))
 					{
 						sim->part_change_type(i,x,y,PT_WTRV);
 					}
@@ -135,7 +136,7 @@ int Element::legacyUpdate(UPDATE_FUNC_ARGS) {
 					r = pmap[y+ry][x+rx];
 					if (!r)
 						continue;
-					if (((r&0xFF)==PT_FIRE || (r&0xFF)==PT_LAVA) && 1>(rand()%10))
+					if ((TYP(r)==PT_FIRE || TYP(r)==PT_LAVA) && 1>(rand()%10))
 					{
 						if (rand()%4==0) sim->part_change_type(i,x,y,PT_SALT);
 						else sim->part_change_type(i,x,y,PT_WTRV);
@@ -151,7 +152,7 @@ int Element::legacyUpdate(UPDATE_FUNC_ARGS) {
 					r = pmap[y+ry][x+rx];
 					if (!r)
 						continue;
-					if (((r&0xFF)==PT_FIRE || (r&0xFF)==PT_LAVA) && 1>(rand()%10))
+					if ((TYP(r)==PT_FIRE || TYP(r)==PT_LAVA) && 1>(rand()%10))
 					{
 						sim->part_change_type(i,x,y,PT_WTRV);
 					}
@@ -165,10 +166,10 @@ int Element::legacyUpdate(UPDATE_FUNC_ARGS) {
 					r = pmap[y+ry][x+rx];
 					if (!r)
 						continue;
-					if (((r&0xFF)==PT_WATR || (r&0xFF)==PT_DSTW) && 1>(rand()%1000))
+					if ((TYP(r)==PT_WATR || TYP(r)==PT_DSTW) && 1>(rand()%1000))
 					{
 						sim->part_change_type(i,x,y,PT_ICEI);
-						sim->part_change_type(r>>8,x+rx,y+ry,PT_ICEI);
+						sim->part_change_type(ID(r),x+rx,y+ry,PT_ICEI);
 					}
 				}
 	}
@@ -180,12 +181,12 @@ int Element::legacyUpdate(UPDATE_FUNC_ARGS) {
 					r = pmap[y+ry][x+rx];
 					if (!r)
 						continue;
-					if (((r&0xFF)==PT_WATR || (r&0xFF)==PT_DSTW) && 1>(rand()%1000))
+					if ((TYP(r)==PT_WATR || TYP(r)==PT_DSTW) && 1>(rand()%1000))
 					{
 						sim->part_change_type(i,x,y,PT_ICEI);
-						sim->part_change_type(r>>8,x+rx,y+ry,PT_ICEI);
+						sim->part_change_type(ID(r),x+rx,y+ry,PT_ICEI);
 					}
-					if (((r&0xFF)==PT_WATR || (r&0xFF)==PT_DSTW) && 15>(rand()%1000))
+					if ((TYP(r)==PT_WATR || TYP(r)==PT_DSTW) && 15>(rand()%1000))
 						sim->part_change_type(i,x,y,PT_WATR);
 				}
 	}

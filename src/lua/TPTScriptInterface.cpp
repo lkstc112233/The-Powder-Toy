@@ -2,11 +2,11 @@
 #include <iostream>
 #include <string>
 #include <deque>
-#include <string.h>
+#include <cstring>
 #ifdef MACOSX
 #include <strings.h>
 #endif
-#include <stdlib.h>
+#include <cstdlib>
 #include "TPTScriptInterface.h"
 #include "gui/game/GameModel.h"
 #include "simulation/Air.h"
@@ -20,7 +20,7 @@ int TPTScriptInterface::Command(std::string command)
 	lastError = "";
 	std::deque<std::string> words;
 	std::deque<AnyType> commandWords;
-	int retCode;
+	int retCode = -1;
 
 	//Split command into words, put them on the stack
 	char * rawCommand;
@@ -56,76 +56,80 @@ int TPTScriptInterface::Command(std::string command)
 	}
 
 	//Evaluate
-	return 0;
+	return retCode;
 }
 
 ValueType TPTScriptInterface::testType(std::string word)
 {
-	int i = 0;
+	size_t i = 0;
 	char * rawWord = (char *)word.c_str();
 	//Function
-	if(word == "set")
+	if (word == "set")
 		return TypeFunction;
-	else if(word == "create")
+	else if (word == "create")
 		return TypeFunction;
-	else if(word == "delete")
+	else if (word == "delete")
 		return TypeFunction;
-	else if(word == "kill")
+	else if (word == "kill")
 		return TypeFunction;
-	else if(word == "load")
+	else if (word == "load")
 		return TypeFunction;
-	else if(word == "reset")
+	else if (word == "reset")
 		return TypeFunction;
-	else if(word == "bubble")
+	else if (word == "bubble")
 		return TypeFunction;
-	else if(word == "quit")
+	else if (word == "quit")
 		return TypeFunction;
+
 	//Basic type
-	parseNumber:
-			for(i = 0; i < word.length(); i++)
-			{
-				if (!(rawWord[i] >= '0' && rawWord[i] <= '9') && !(rawWord[i] == '-' && !i))
-				{
-					if (rawWord[i] == '.' && rawWord[i+1])
-						goto parseFloat;
-					else if (rawWord[i] == ',' && rawWord[i+1] >= '0' && rawWord[i+1] <= '9')
-						goto parsePoint;
-					else if ((rawWord[i] == '#' || (i && rawWord[i-1] == '0' && rawWord[i] == 'x')) &&
-						((rawWord[i+1] >= '0' && rawWord[i+1] <= '9')
-						|| (rawWord[i+1] >= 'a' && rawWord[i+1] <= 'f')
-						|| (rawWord[i+1] >= 'A' && rawWord[i+1] <= 'F')))
-						goto parseNumberHex;
-					else
-						goto parseString;
-				}
-			}
-			return TypeNumber;
-	parseFloat:
-			for (i++; i < word.length(); i++)
-				if(!((rawWord[i] >= '0' && rawWord[i] <= '9') || (rawWord[i] >= 'a' && rawWord[i] <= 'f') || (rawWord[i] >= 'A' && rawWord[i] <= 'F')))
-				{
-					goto parseString;
-				}
-			return TypeFloat;
-	parseNumberHex:
-			for (i++; i < word.length(); i++)
-				if(!((rawWord[i] >= '0' && rawWord[i] <= '9') || (rawWord[i] >= 'a' && rawWord[i] <= 'f') || (rawWord[i] >= 'A' && rawWord[i] <= 'F')))
-				{
-					goto parseString;
-				}
-			return TypeNumber;
-	parsePoint:
-			for (i++; i < word.length(); i++)
-				if(!(rawWord[i] >= '0' && rawWord[i] <= '9'))
-				{
-					goto parseString;
-				}
-			return TypePoint;
-	parseString:
-			return TypeString;
+	for (i = 0; i < word.length(); i++)
+	{
+		if (!(rawWord[i] >= '0' && rawWord[i] <= '9') && !(rawWord[i] == '-' && !i))
+		{
+			if (rawWord[i] == '.' && rawWord[i+1])
+				goto parseFloat;
+			else if (rawWord[i] == ',' && rawWord[i+1] >= '0' && rawWord[i+1] <= '9')
+				goto parsePoint;
+			else if ((rawWord[i] == '#' || (i && rawWord[i-1] == '0' && rawWord[i] == 'x')) &&
+				((rawWord[i+1] >= '0' && rawWord[i+1] <= '9')
+				|| (rawWord[i+1] >= 'a' && rawWord[i+1] <= 'f')
+				|| (rawWord[i+1] >= 'A' && rawWord[i+1] <= 'F')))
+				goto parseNumberHex;
+			else
+				goto parseString;
+		}
+	}
+	return TypeNumber;
+
+parseFloat:
+	for (i++; i < word.length(); i++)
+		if (!((rawWord[i] >= '0' && rawWord[i] <= '9')))
+		{
+			goto parseString;
+		}
+	return TypeFloat;
+
+parseNumberHex:
+	for (i++; i < word.length(); i++)
+		if (!((rawWord[i] >= '0' && rawWord[i] <= '9') || (rawWord[i] >= 'a' && rawWord[i] <= 'f') || (rawWord[i] >= 'A' && rawWord[i] <= 'F')))
+		{
+			goto parseString;
+		}
+	return TypeNumber;
+
+parsePoint:
+	for (i++; i < word.length(); i++)
+		if (!(rawWord[i] >= '0' && rawWord[i] <= '9'))
+		{
+			goto parseString;
+		}
+	return TypePoint;
+
+parseString:
+	return TypeString;
 }
 
-float TPTScriptInterface::parseNumber(char * stringData)
+int TPTScriptInterface::parseNumber(char * stringData)
 {
 	char cc;
 	int base = 10;
@@ -142,14 +146,14 @@ float TPTScriptInterface::parseNumber(char * stringData)
 	}
 	if (base == 16)
 	{
-		while(cc = *(stringData++))
+		while ((cc = *(stringData++)))
 		{
 			currentNumber *= base;
-			if(cc >= '0' && cc <= '9')
+			if (cc >= '0' && cc <= '9')
 				currentNumber += cc - '0';
-			else if(cc >= 'a' && cc <= 'f')
+			else if (cc >= 'a' && cc <= 'f')
 				currentNumber += (cc - 'a') + 10;
-			else if(cc >= 'A' && cc <= 'F')
+			else if (cc >= 'A' && cc <= 'F')
 				currentNumber += (cc - 'A') + 10;
 			else
 				break;
@@ -199,6 +203,8 @@ AnyType TPTScriptInterface::eval(std::deque<std::string> * words)
 	}
 	case TypeString:
 		return StringType(word);
+	default:
+		break;
 	}
 	return StringType(word);
 }
@@ -262,16 +268,15 @@ AnyType TPTScriptInterface::tptS_set(std::deque<std::string> * words)
 
 	FormatType propertyFormat;
 	int propertyOffset = GetPropertyOffset(property.Value(), propertyFormat);
-
-	if(propertyOffset==-1)
+	if (propertyOffset == -1)
 		throw GeneralException("Invalid property");
 
 	//Selector
-	int newValue;
-	float newValuef;
+	int newValue = 0;
+	float newValuef = 0.0f;
 	if (value.GetType() == TypeNumber)
 	{
-		newValue = newValuef = ((NumberType)value).Value();
+		newValuef = newValue = ((NumberType)value).Value();
 	}
 	else if (value.GetType() == TypeFloat)
 	{
@@ -291,7 +296,7 @@ AnyType TPTScriptInterface::tptS_set(std::deque<std::string> * words)
 		}
 		else
 		{
-			newValue = GetParticleType(((StringType)value).Value());
+			newValue = m->GetSimulation()->GetParticleType(((StringType)value).Value());
 			if (newValue < 0 || newValue >= PT_NUM)
 			{
 				// TODO: add element CAKE to invalidate this
@@ -306,7 +311,7 @@ AnyType TPTScriptInterface::tptS_set(std::deque<std::string> * words)
 	if (property.Value() == "type" && (newValue < 0 || newValue >= PT_NUM || !sim->elements[newValue].Enabled))
 		throw GeneralException("Invalid element");
 
-	if(selector.GetType() == TypePoint || selector.GetType() == TypeNumber)
+	if (selector.GetType() == TypePoint || selector.GetType() == TypeNumber)
 	{
 		int partIndex = -1;
 		if(selector.GetType() == TypePoint)
@@ -329,10 +334,15 @@ AnyType TPTScriptInterface::tptS_set(std::deque<std::string> * words)
 		case FormatFloat:
 			*((float*)(partsBlock+(partIndex*sizeof(Particle))+propertyOffset)) = newValuef;
 			break;
+		case FormatElement:
+			sim->part_change_type(partIndex, sim->parts[partIndex].x, sim->parts[partIndex].y, newValue);
+			break;
+		default:
+			break;
 		}
 		returnValue = 1;
 	}
-	else if(selector.GetType() == TypeString && ((StringType)selector).Value() == "all")
+	else if (selector.GetType() == TypeString && ((StringType)selector).Value() == "all")
 	{
 		switch(propertyFormat)
 		{
@@ -355,28 +365,39 @@ AnyType TPTScriptInterface::tptS_set(std::deque<std::string> * words)
 						*((float*)(partsBlock+(j*sizeof(Particle))+propertyOffset)) = newValuef;
 					}
 			}
+			break;
+		case FormatElement:
+			{
+				for (int j = 0; j < NPART; j++)
+					if (sim->parts[j].type)
+					{
+						returnValue++;
+						sim->part_change_type(j, sim->parts[j].x, sim->parts[j].y, newValue);
+					}
+			}
+			break;
+		default:
 			break;
 		}
 	}
 	else if(selector.GetType() == TypeString || selector.GetType() == TypeNumber)
 	{
-		int type;
-		if(selector.GetType() == TypeNumber)
+		int type = 0;
+		if (selector.GetType() == TypeNumber)
 			type = ((NumberType)selector).Value();
-		else if(selector.GetType() == TypeString)
-			type = GetParticleType(((StringType)selector).Value());
+		else if (selector.GetType() == TypeString)
+			type = m->GetSimulation()->GetParticleType(((StringType)selector).Value());
 
-		if(type<0 || type>=PT_NUM)
+		if (type<0 || type>=PT_NUM)
 			throw GeneralException("Invalid particle type");
-		if(type==0)
+		if (type==0)
 			throw GeneralException("Cannot set properties of particles that do not exist");
-		std::cout << propertyOffset << std::endl;
 		switch(propertyFormat)
 		{
 		case FormatInt:
 			{
-				for(int j = 0; j < NPART; j++)
-					if(sim->parts[j].type == type)
+				for (int j = 0; j < NPART; j++)
+					if (sim->parts[j].type == type)
 					{
 						returnValue++;
 						*((int*)(partsBlock+(j*sizeof(Particle))+propertyOffset)) = newValue;
@@ -385,13 +406,25 @@ AnyType TPTScriptInterface::tptS_set(std::deque<std::string> * words)
 			break;
 		case FormatFloat:
 			{
-				for(int j = 0; j < NPART; j++)
-					if(sim->parts[j].type == type)
+				for (int j = 0; j < NPART; j++)
+					if (sim->parts[j].type == type)
 					{
 						returnValue++;
 						*((float*)(partsBlock+(j*sizeof(Particle))+propertyOffset)) = newValuef;
 					}
 			}
+			break;
+		case FormatElement:
+			{
+				for (int j = 0; j < NPART; j++)
+					if (sim->parts[j].type == type)
+					{
+						returnValue++;
+						sim->part_change_type(j, sim->parts[j].x, sim->parts[j].y, newValue);
+					}
+			}
+			break;
+		default:
 			break;
 		}
 	}
@@ -412,7 +445,7 @@ AnyType TPTScriptInterface::tptS_create(std::deque<std::string> * words)
 	if(createType.GetType() == TypeNumber)
 		type = ((NumberType)createType).Value();
 	else if(createType.GetType() == TypeString)
-		type = GetParticleType(((StringType)createType).Value());
+		type = m->GetSimulation()->GetParticleType(((StringType)createType).Value());
 	else
 		throw GeneralException("Invalid type");
 
@@ -423,7 +456,13 @@ AnyType TPTScriptInterface::tptS_create(std::deque<std::string> * words)
 	if(tempPoint.X<0 || tempPoint.Y<0 || tempPoint.Y >= YRES || tempPoint.X >= XRES)
 				throw GeneralException("Invalid position");
 
-	int returnValue = sim->create_part(-1, tempPoint.X, tempPoint.Y, type);
+	int v = -1;
+	if (ID(type))
+	{
+		v = ID(type);
+		type = TYP(type);
+	}
+	int returnValue = sim->create_part(-1, tempPoint.X, tempPoint.Y, type, v);
 
 	return NumberType(returnValue);
 }
@@ -531,14 +570,7 @@ AnyType TPTScriptInterface::tptS_reset(std::deque<std::string> * words)
 	}
 	else if (resetStr == "sparks")
 	{
-		for (int i = 0; i < NPART; i++)
-		{
-			if (sim->parts[i].type == PT_SPRK)
-			{
-				sim->parts[i].type = sim->parts[i].ctype;
-				sim->parts[i].life = 4;
-			}
-		}
+		c->ResetSpark();
 	}
 	else if (resetStr == "temp")
 	{

@@ -6,17 +6,34 @@
 class UserInfo
 {
 public:
-	int ID;
-	int Age;
-	std::string Username;
-	std::string Biography;
-	std::string Location;
-	UserInfo(int id, int age, std::string username, std::string biography, std::string location):
-		ID(id),
-		Age(age),
-		Username(username),
-		Biography(biography),
-		Location(location)
+	int UserID;
+	int age;
+	std::string username;
+	std::string biography;
+	std::string location;
+	std::string website;
+
+	int saveCount;
+	float averageScore;
+	int highestScore;
+
+	int topicCount;
+	int topicReplies;
+	int reputation;
+
+	UserInfo(int id, int age, std::string username, std::string biography, std::string location, std::string website, int saveCount, float averageScore, int highestScore, int topicCount, int topicReplies, int reputation):
+		UserID(id),
+		age(age),
+		username(username),
+		biography(biography),
+		location(location),
+		website(website),
+		saveCount(saveCount),
+		averageScore(averageScore),
+		highestScore(highestScore),
+		topicCount(topicCount),
+		topicReplies(topicReplies),
+		reputation(reputation)
 	{ }
 	UserInfo() {}
 };

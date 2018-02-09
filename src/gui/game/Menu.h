@@ -8,18 +8,20 @@ class Menu
 	char icon;
 	string description;
 	vector<Tool*> tools;
+	bool visible;
 public:
-	Menu(char icon_, string description_):
+	Menu(char icon_, string description_, int visible_):
 		icon(icon_),
 		description(description_),
-		tools(vector<Tool*>())
+		tools(vector<Tool*>()),
+		visible(visible_ ? true : false)
 	{
 
 	}
 
 	virtual ~Menu()
 	{
-		for(int i = 0; i < tools.size(); i++)
+		for(unsigned int i = 0; i < tools.size(); i++)
 		{
 			delete tools[i];
 		}
@@ -41,9 +43,19 @@ public:
 		return description;
 	}
 
+	bool GetVisible()
+	{
+		return visible;
+	}
+
 	void AddTool(Tool * tool_)
 	{
 		tools.push_back(tool_);
+	}
+
+	void ClearTools()
+	{
+		tools.clear();
 	}
 };
 

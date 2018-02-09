@@ -1,5 +1,6 @@
 #include "LoginView.h"
 
+#include "graphics/Graphics.h"
 #include "gui/interface/Button.h"
 #include "gui/interface/Label.h"
 #include "gui/interface/Textbox.h"
@@ -33,9 +34,9 @@ LoginView::LoginView():
 	loginButton(new ui::Button(ui::Point(200-100, 87-17), ui::Point(100, 17), "Sign in")),
 	cancelButton(new ui::Button(ui::Point(0, 87-17), ui::Point(101, 17), "Sign Out")),
 	titleLabel(new ui::Label(ui::Point(4, 5), ui::Point(200-16, 16), "Server login")),
+	infoLabel(new ui::Label(ui::Point(8, 67), ui::Point(200-16, 16), "")),
 	usernameField(new ui::Textbox(ui::Point(8, 25), ui::Point(200-16, 17), Client::Ref().GetAuthUser().Username, "[username]")),
 	passwordField(new ui::Textbox(ui::Point(8, 46), ui::Point(200-16, 17), "", "[password]")),
-	infoLabel(new ui::Label(ui::Point(8, 67), ui::Point(200-16, 16), "")),
 	targetSize(0, 0)
 {
 	targetSize = Size;
@@ -76,7 +77,7 @@ void LoginView::OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, boo
 {
 	switch(key)
 	{
-	case KEY_TAB:
+	case SDLK_TAB:
 		if(IsFocused(usernameField))
 			FocusComponent(passwordField);
 		else
@@ -87,13 +88,13 @@ void LoginView::OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, boo
 
 void LoginView::OnTryExit(ExitMethod method)
 {
-	ui::Engine::Ref().CloseWindow();
+	CloseActiveWindow();
 }
 
 void LoginView::NotifyStatusChanged(LoginModel * sender)
 {
 	if (infoLabel->Visible)
-		targetSize.Y -= infoLabel->Size.Y+2;
+		targetSize.Y = 87;
 	infoLabel->SetText(sender->GetStatusText());
 	infoLabel->AutoHeight();
 	if (sender->GetStatusText().length())
@@ -134,7 +135,7 @@ void LoginView::OnTick(float dt)
 
 void LoginView::OnDraw()
 {
-	Graphics * g = ui::Engine::Ref().g;
+	Graphics * g = GetGraphics();
 	g->clearrect(Position.X-2, Position.Y-2, Size.X+3, Size.Y+3);
 	g->drawrect(Position.X, Position.Y, Size.X, Size.Y, 255, 255, 255, 255);
 }

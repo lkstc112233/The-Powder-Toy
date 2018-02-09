@@ -1,4 +1,6 @@
 #include "Checkbox.h"
+#include "graphics/Graphics.h"
+#include "gui/interface/Window.h"
 
 using namespace ui;
 
@@ -6,8 +8,8 @@ Checkbox::Checkbox(ui::Point position, ui::Point size, std::string text, std::st
 	Component(position, size),
 	text(text),
 	toolTip(toolTip),
-	isMouseOver(false),
 	checked(false),
+	isMouseOver(false),
 	actionCallback(NULL)
 {
 
@@ -59,7 +61,7 @@ void Checkbox::OnMouseHover(int x, int y)
 {
 	if(toolTip.length()>0 && GetParentWindow())
 	{
-		GetParentWindow()->ToolTip(this, ui::Point(x, y), toolTip);
+		GetParentWindow()->ToolTip(Position, toolTip);
 	}
 }
 
@@ -70,7 +72,7 @@ void Checkbox::OnMouseLeave(int x, int y)
 
 void Checkbox::Draw(const Point& screenPos)
 {
-	Graphics * g = Engine::Ref().g;
+	Graphics * g = GetGraphics();
 	if(checked)
 	{
 		g->fillrect(screenPos.X+5, screenPos.Y+5, 6, 6, 255, 255, 255, 255);
@@ -96,13 +98,11 @@ void Checkbox::Draw(const Point& screenPos)
 
 void Checkbox::SetActionCallback(CheckboxAction * action)
 {
-	if(actionCallback)
-		delete actionCallback;
+	delete actionCallback;
 	actionCallback = action;
 }
 
 Checkbox::~Checkbox() {
-	if(actionCallback)
-		delete actionCallback;
+	delete actionCallback;
 }
 

@@ -9,16 +9,23 @@
 #include "gui/game/ToolButton.h"
 
 class Tool;
-
 class GameController;
 
-class ElementSearchActivity: public WindowActivity {
+class ElementSearchActivity: public WindowActivity
+{
 	Tool * firstResult;
 	GameController * gameController;
 	std::vector<Tool*> tools;
 	ui::Textbox * searchField;
 	std::vector<ToolButton*> toolButtons;
+	std::string toolTip;
+	int toolTipPresence;
+	bool shiftPressed;
+	bool ctrlPressed;
+	bool altPressed;
+	bool isToolTipFadingIn;
 	void searchTools(std::string query);
+
 public:
 	class ToolAction;
 	bool exit;
@@ -26,9 +33,11 @@ public:
 	ElementSearchActivity(GameController * gameController, std::vector<Tool*> tools);
 	void SetActiveTool(int selectionState, Tool * tool);
 	virtual ~ElementSearchActivity();
-	virtual void OnDraw();
 	virtual void OnTick(float dt);
 	virtual void OnKeyPress(int key, Uint16 character, bool shift, bool ctrl, bool alt);
+	virtual void OnKeyRelease(int key, Uint16 character, bool shift, bool ctrl, bool alt);
+	virtual void OnDraw();
+	virtual void ToolTip(ui::Point senderPosition, std::string ToolTip);
 };
 
 #endif /* ELEMENTSEARCHACTIVITY_H_ */

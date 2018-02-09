@@ -35,8 +35,8 @@ public:
 
 LocalSaveActivity::LocalSaveActivity(SaveFile save, FileSavedCallback * callback) :
 	WindowActivity(ui::Point(-1, -1), ui::Point(220, 200)),
-	thumbnail(NULL),
 	save(save),
+	thumbnail(NULL),
 	callback(callback)
 {
 	ui::Label * titleLabel = new ui::Label(ui::Point(4, 5), ui::Point(Size.X-8, 16), "Save to computer:");
@@ -110,7 +110,18 @@ void LocalSaveActivity::Save()
 void LocalSaveActivity::saveWrite(std::string finalFilename)
 {
 	Client::Ref().MakeDirectory(LOCAL_SAVE_DIR);
-	if (Client::Ref().WriteFile(save.GetGameSave()->Serialise(), finalFilename))
+	GameSave *gameSave = save.GetGameSave();
+	Json::Value localSaveInfo;
+	localSaveInfo["type"] = "localsave";
+	localSaveInfo["username"] = Client::Ref().GetAuthUser().Username;
+	localSaveInfo["title"] = finalFilename;
+	localSaveInfo["date"] = (Json::Value::UInt64)time(NULL);
+	Client::Ref().SaveAuthorInfo(&localSaveInfo);
+	gameSave->authors = localSaveInfo;
+	std::vector<char> saveData = gameSave->Serialise();
+	if (saveData.size() == 0)
+		new ErrorMessage("Error", "Unable to serialize game data.");
+	else if (Client::Ref().WriteFile(saveData, finalFilename))
 		new ErrorMessage("Error", "Unable to write save file.");
 	else
 	{
@@ -121,8 +132,8 @@ void LocalSaveActivity::saveWrite(std::string finalFilename)
 
 void LocalSaveActivity::OnDraw()
 {
-	Graphics * g = ui::Engine::Ref().g;
-	g->draw_rgba_image((unsigned char*)save_to_disk_image, 0, 0, 0.7f);
+	Graphics * g = GetGraphics();
+	g->draw_rgba_image(save_to_disk_image, 0, 0, 0.7f);
 	g->clearrect(Position.X-2, Position.Y-2, Size.X+3, Size.Y+3);
 	g->drawrect(Position.X, Position.Y, Size.X, Size.Y, 255, 255, 255, 255);
 
@@ -135,16 +146,13 @@ void LocalSaveActivity::OnDraw()
 
 void LocalSaveActivity::OnResponseReady(void * imagePtr, int identifier)
 {
-	if(thumbnail)
-		delete thumbnail;
+	delete thumbnail;
 	thumbnail = (VideoBuffer*)imagePtr;
 }
 
 LocalSaveActivity::~LocalSaveActivity()
 {
 	RequestBroker::Ref().DetachRequestListener(this);
-	if(thumbnail)
-		delete thumbnail;
-	if(callback)
-		delete callback;
+	delete thumbnail;
+	delete callback;
 }

@@ -28,23 +28,23 @@ void ConsoleView::DoKeyPress(int key, Uint16 character, bool shift, bool ctrl, b
 {
 	switch(key)
 	{
-	case KEY_ESCAPE:
+	case SDLK_ESCAPE:
 	case '`':
 		if (character != '~')
 			c->CloseConsole();
 		else
 			Window::DoKeyPress(key, character, shift, ctrl, alt);
 		break;
-	case KEY_RETURN:
-	case KEY_ENTER:
+	case SDLK_RETURN:
+	case SDLK_KP_ENTER:
 		c->EvaluateCommand(commandField->GetText());
 		commandField->SetText("");
 		commandField->SetDisplayText("");
 		break;
-	case KEY_DOWN:
+	case SDLK_DOWN:
 		c->NextCommand();
 		break;
-	case KEY_UP:
+	case SDLK_UP:
 		c->PreviousCommand();
 		break;
 	default:
@@ -55,7 +55,7 @@ void ConsoleView::DoKeyPress(int key, Uint16 character, bool shift, bool ctrl, b
 
 void ConsoleView::NotifyPreviousCommandsChanged(ConsoleModel * sender)
 {
-	for(int i = 0; i < commandList.size(); i++)
+	for (size_t i = 0; i < commandList.size(); i++)
 	{
 		RemoveComponent(commandList[i]);
 		delete commandList[i];
@@ -91,7 +91,7 @@ void ConsoleView::NotifyCurrentCommandChanged(ConsoleModel * sender)
 
 void ConsoleView::OnDraw()
 {
-	Graphics * g = ui::Engine::Ref().g;
+	Graphics * g = GetGraphics();
 	g->fillrect(Position.X, Position.Y, Size.X, Size.Y, 0, 0, 0, 110);
 	g->draw_line(Position.X, Position.Y+Size.Y-16, Position.X+Size.X, Position.Y+Size.Y-16, 255, 255, 255, 160);
 	g->draw_line(Position.X, Position.Y+Size.Y, Position.X+Size.X, Position.Y+Size.Y, 255, 255, 255, 200);

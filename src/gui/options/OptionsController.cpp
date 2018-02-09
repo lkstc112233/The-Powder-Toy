@@ -1,17 +1,19 @@
 #include "OptionsController.h"
 #include "gui/dialogues/ErrorMessage.h"
+#include "gui/interface/Engine.h"
+#include "gui/game/GameModel.h"
 
 OptionsController::OptionsController(GameModel * gModel_, ControllerCallback * callback_):
-	callback(callback_),
 	gModel(gModel_),
+	callback(callback_),
 	HasExited(false)
 {
+	this->depth3d = ui::Engine::Ref().Get3dDepth();
 	view = new OptionsView();
 	model = new OptionsModel(gModel);
 	model->AddObserver(view);
 
 	view->AttachController(this);
-
 }
 
 void OptionsController::SetHeatSimulation(bool state)
@@ -44,9 +46,9 @@ void OptionsController::SetAirMode(int airMode)
 	model->SetAirMode(airMode);
 }
 
-void OptionsController::SetEdgeMode(int airMode)
+void OptionsController::SetEdgeMode(int edgeMode)
 {
-	model->SetEdgeMode(airMode);
+	model->SetEdgeMode(edgeMode);
 }
 
 void OptionsController::SetFullscreen(bool fullscreen)
@@ -59,26 +61,19 @@ void OptionsController::SetShowAvatars(bool showAvatars)
 	model->SetShowAvatars(showAvatars);
 }
 
-void OptionsController::SetScale(bool scale)
+void OptionsController::SetScale(int scale)
 {
-	if(scale)
-	{
-		if(ui::Engine::Ref().GetMaxWidth() >= ui::Engine::Ref().GetWidth() * 2 && ui::Engine::Ref().GetMaxHeight() >= ui::Engine::Ref().GetHeight() * 2)
-			model->SetScale(scale);
-		else
-		{
-			new ErrorMessage("Screen resolution error", "Your screen size is too small to use this scale mode.");
-			model->SetScale(false);
-		}
-	}
-	else
-		model->SetScale(scale);
-
+	model->SetScale(scale);
 }
 
 void OptionsController::SetFastQuit(bool fastquit)
 {
 	model->SetFastQuit(fastquit);
+}
+
+void OptionsController::Set3dDepth(int depth)
+{
+	depth3d = depth;
 }
 
 OptionsView * OptionsController::GetView()
@@ -88,24 +83,21 @@ OptionsView * OptionsController::GetView()
 
 void OptionsController::Exit()
 {
-	if(ui::Engine::Ref().GetWindow() == view)
-	{
-		ui::Engine::Ref().CloseWindow();
-	}
-	if(callback)
+	view->CloseActiveWindow();
+	// only update on close, it would be hard to edit if the changes were live
+	ui::Engine::Ref().Set3dDepth(depth3d);
+
+	if (callback)
 		callback->ControllerExit();
 	HasExited = true;
 }
 
 
-OptionsController::~OptionsController() {
-	if(ui::Engine::Ref().GetWindow() == view)
-	{
-		ui::Engine::Ref().CloseWindow();
-	}
+OptionsController::~OptionsController()
+{
+	view->CloseActiveWindow();
 	delete model;
 	delete view;
-	if(callback)
-		delete callback;
+	delete callback;
 }
 

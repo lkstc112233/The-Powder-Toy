@@ -1,13 +1,15 @@
 #include "ProgressBar.h"
+#include "common/tpt-minmax.h"
+#include "graphics/Graphics.h"
 #include "gui/Style.h"
 
 using namespace ui;
 
 ProgressBar::ProgressBar(Point position, Point size, int startProgress, std::string startStatus):
 	Component(position, size),
+	progress(0),
 	intermediatePos(0.0f),
-	progressStatus(""),
-	progress(0)
+	progressStatus("")
 {
 	SetStatus(startStatus);
 	SetProgress(startProgress);
@@ -37,7 +39,7 @@ std::string ProgressBar::GetStatus()
 
 void ProgressBar::Draw(const Point & screenPos)
 {
-	Graphics * g = ui::Engine::Ref().g;
+	Graphics * g = GetGraphics();
 
 	ui::Colour progressBarColour = style::Colour::WarningTitle;
 

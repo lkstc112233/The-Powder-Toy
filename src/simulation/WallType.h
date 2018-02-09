@@ -1,7 +1,7 @@
 #ifndef WALLTYPE_H_
 #define WALLTYPE_H_
 
-#include "graphics/Graphics.h"
+#include "graphics/Pixel.h"
 class VideoBuffer;
 
 struct wall_type
@@ -11,6 +11,7 @@ struct wall_type
 	int drawstyle;
 	VideoBuffer * (*textureGen)(int, int, int);
 	const char *name;
+	const char *identifier;
 	const char *descs;
 };
 
